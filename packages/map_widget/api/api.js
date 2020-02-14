@@ -10,9 +10,9 @@ export function callGet(domain, path, params) {
 			params: params
 		})
 		.then(function(response) {
-			console.log("call response = ");
-			console.log(response.data);
-			console.log(response.config);
+			//console.log("call response = ");
+			//console.log(response.data);
+			//console.log(response.config);
 			return response.data;
 		})
 		.catch(function(error) {

@@ -13,9 +13,9 @@ class MapWidget extends LitElement {
 
   static get properties() {
     return {
-      propStationTypes: {
+      propTypes: {
         type: String,
-        attribute: 'station-types'
+        attribute: 'types'
       },
       propDomain: {
         type: String,
@@ -24,6 +24,10 @@ class MapWidget extends LitElement {
       propLanguage: {
         type: String,
         attribute: 'language'
+      },
+      propCenterMap: {
+        type: String,
+        attribute: 'centermap'
       }
     };
   }
@@ -45,12 +49,12 @@ class MapWidget extends LitElement {
 
 
     /* Internationalization */
-    this.language_default = 'en';
-    this.language = 'de';
+    // this.language_default = 'en';
+    // this.language = 'de';
 
     /* Data fetched from Open Data Hub */
     this.nodes = [];
-    this.stationTypes = {};
+    this.types = {};    
 
     /* Requests */
     //this.fetchStations = fetchStations.bind(this);
@@ -61,6 +65,11 @@ class MapWidget extends LitElement {
   async initializeMap() {
     let root = this.shadowRoot;
     let mapref = root.getElementById('map');
+
+    if(this.propCenterMap){
+      this.map_center = [46.537697, 10.919736]
+      this.map_zoom = 12;      
+    }
 
     this.map = L.map(mapref, {
       zoomControl: false
@@ -74,6 +83,12 @@ class MapWidget extends LitElement {
   async drawMap() {
 
     let columns_layer_array = [];
+
+    
+    console.log(this.propCenterMap);
+    console.log(this.propLanguage);
+    console.log(this.propDomain);
+
 
     if(this.propDomain == "mobility"){
       await this.fetchStations(this.propStationTypes);
@@ -133,17 +148,17 @@ class MapWidget extends LitElement {
 
     if(this.propDomain == "tourism")
     {
-      await this.fetchActivities(this.propStationTypes, this.propLanguage);
+      await this.fetchActivities(this.propTypes, this.propLanguage);
 
       this.nodes.map(activity => {
 
         if(activity.GpsInfo && activity.GpsInfo.length > 0)
         {
 
-          if (! (activity.Type in this.stationTypes)) {
-            let cnt = Object.keys(this.stationTypes).length
-            this.stationTypes[activity.Type] = rainbow(40000, Math.random() * 40000);
-          }
+          // if (! (activity.Type in this.types)) {
+          //   let cnt = Object.keys(this.types).length
+          //   this.types[activity.Type] = rainbow(40000, Math.random() * 40000);
+          // }
 
           var markerlatlng = {};
           markerlatlng.itemcount = activity.GpsInfo.length;
@@ -182,7 +197,7 @@ class MapWidget extends LitElement {
 
           let icon = L.divIcon({
             html: '<div class="marker"><div style="background-color: white">' + fillChar + '</div></div>',
-            //html: '<div class="marker"><div style="background-color: ' + this.stationTypes[activity.Type] + '">' + fillChar + '</div></div>',
+            //html: '<div class="marker"><div style="background-color: ' + this.types[activity.Type] + '">' + fillChar + '</div></div>',
             iconSize: L.point(17, 17)
           });
 
@@ -357,7 +372,6 @@ class MapWidget extends LitElement {
     this.layer_columns.addLayer(columns_layer);
     /** Add the cluster group to the map */
     this.map.addLayer(this.layer_columns);
-
   }
 
   async firstUpdated() {
