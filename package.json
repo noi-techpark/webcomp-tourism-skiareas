@@ -1,0 +1,35 @@
+{
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "bts": "lerna bootstrap",
+    "bc": "lerna run --parallel --stream build",
+    "wc": "lerna run --parallel --stream watch",
+    "demo": "lerna run --parallel --stream demo",
+    "build-components": "lerna run --parallel --stream build",
+    "watch-components": "lerna run --parallel --stream watch"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "file-loader": "^5.0.2",
+    "lerna": "^3.13.1",
+    "node-sass": "^4.13.1",
+    "sass-loader": "^8.0.2"
+  },
+  "name": "noi",
+  "version": "1.0.0",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "css-loader": "^3.4.2",
+    "leaflet": "^1.6.0",
+    "leaflet-gpx": "^1.5.0",
+    "leaflet.markercluster": "^1.4.1",
+    "lit-element": "^2.2.1",
+    "moment": "^2.24.0",
+    "url-loader": "^3.0.0",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11"
+  }
+}
