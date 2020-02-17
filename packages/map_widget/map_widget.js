@@ -67,8 +67,9 @@ class MapWidget extends LitElement {
     let mapref = root.getElementById('map');
 
     if(this.propCenterMap){
-      this.map_center = [46.537697, 10.919736]
-      this.map_zoom = 12;      
+      var splittedgps = this.propCenterMap.split(',');
+      this.map_center =  [parseFloat(splittedgps[0]),parseFloat(splittedgps[1])]
+      this.map_zoom = parseInt(splittedgps[2]);      
     }
 
     this.map = L.map(mapref, {
@@ -83,7 +84,6 @@ class MapWidget extends LitElement {
   async drawMap() {
 
     let columns_layer_array = [];
-
     
     console.log(this.propCenterMap);
     console.log(this.propLanguage);
