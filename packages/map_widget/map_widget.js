@@ -267,20 +267,15 @@ class MapWidget extends LitElement {
           opacity:0.8
         });
 
-        let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';
-        popupContSkiArea += '<table>';
+        let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';        
         if(skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
         {
-           //Opening
-           popupContSkiArea += '<tr>';
-           popupContSkiArea += '<td>' + "Geöffnet von: " + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " bis: " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</td>';
-           popupContSkiArea += '</tr>';
-           //BaseText
-          popupContSkiArea += '<tr>';
-          popupContSkiArea += '<td>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</td>';
-          popupContSkiArea += '</tr>';         
+           //Opening           
+           popupContSkiArea += '<div>' + "Geöffnet von: " + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " bis: " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
+           //BaseText          
+          popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';              
         }
-        popupContSkiArea += '</table></div>';
+        popupContSkiArea += '</div>';
 
         let popupskiarea = L.popup().setContent(popupContSkiArea);
 
