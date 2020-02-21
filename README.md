@@ -29,25 +29,22 @@ Include the Javascript file `dist/map_widget.min.js` in your HTML and define the
 
 Type: select
 Options: "tourism"
-Default: "tourism"
 
 #### types
 
 Type: bitmask
 Options: Refer to https://tourism.opendatahub.bz.it/api/ActivityTypes
-Default: ""
 
 #### language
 
 Type: string
 Options: "de,it,en"
-Default: "en"
 
 #### centermap
 
 Type: string
 Options: "latitude,longitude,zoomlevel"
-Default: ""
+Pass latitude, longitude and zoomlevel separated by "," if map should be centered an a specific gps point
 
 
 ## Getting started
