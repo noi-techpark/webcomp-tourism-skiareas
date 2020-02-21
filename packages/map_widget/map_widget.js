@@ -17,10 +17,10 @@ class MapWidget extends LitElement {
         type: String,
         attribute: 'types'
       },
-      propDomain: {
-        type: String,
-        attribute: 'domain'
-      },
+      // propDomain: {
+      //   type: String,
+      //   attribute: 'domain'
+      // },
       propLanguage: {
         type: String,
         attribute: 'language'
@@ -85,69 +85,6 @@ class MapWidget extends LitElement {
 
     let columns_layer_array = [];
     
-    console.log(this.propCenterMap);
-    console.log(this.propLanguage);
-    console.log(this.propDomain);
-
-
-    if(this.propDomain == "mobility"){
-      await this.fetchStations(this.propStationTypes);
-
-      this.nodes.map(station => {
-
-        if (! (station.stype in this.stationTypes)) {
-          let cnt = Object.keys(this.stationTypes).length
-          this.stationTypes[station.stype] = rainbow(4000, Math.random() * 4000);
-        }
-
-        const pos = [
-          station.scoordinate.y,
-          station.scoordinate.x
-        ];
-
-        let fillChar = station.pcode ? '#' : '&nbsp;';
-
-        let icon = L.divIcon({
-          html: '<div class="marker"><div style="background-color: ' + this.stationTypes[station.stype] + '">' + fillChar + '</div></div>',
-          iconSize: L.point(25, 25)
-        });
-
-        let popupCont = '<div class="popup"><b>' + station.sname + '</b><br /><i>' + station.stype + '</i>';
-        popupCont += '<table>';
-        Object.keys(station.smetadata).forEach(key => {
-          let value = station.smetadata[key];
-          if (value) {
-            popupCont += '<tr>';
-            popupCont += '<td>' + key + '</td>';
-            if (value instanceof Object) {
-              let act_value = value[this.language];
-              if (typeof act_value === 'undefined') {
-                act_value = value[this.language_default];
-              }
-              if (typeof act_value === 'undefined') {
-                act_value = '<pre style="background-color: lightgray">' + JSON.stringify(value, null, 2) + '</pre>';
-              }
-              popupCont += '<td><div class="popupdiv">' + act_value + '</div></td>';
-            } else {
-              popupCont += '<td>' + value + '</td>';
-            }
-            popupCont += '</tr>';
-          }
-        });
-        popupCont += '</table></div>';
-
-        let popup = L.popup().setContent(popupCont);
-
-        let marker = L.marker(pos, {
-          icon: icon,
-        }).bindPopup(popup);
-
-        columns_layer_array.push(marker);
-      });
-    }
-
-    if(this.propDomain == "tourism")
-    {
       await this.fetchActivities(this.propTypes, this.propLanguage);
 
       this.nodes.map(activity => {
@@ -352,7 +289,7 @@ class MapWidget extends LitElement {
         }).addTo(this.map).bindPopup(popupskiarea);
 
       });
-    }
+    
 
     this.visibleNodes = columns_layer_array.length;
     let columns_layer = L.layerGroup(columns_layer_array, {});

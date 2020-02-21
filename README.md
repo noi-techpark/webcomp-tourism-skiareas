@@ -20,15 +20,10 @@ components into any website.
 Include the Javascript file `dist/map_widget.min.js` in your HTML and define the web component like this:
 
 ```html
-<map-widget domain="tourism" types="512" language="de" centermap=""></map-widget>
+<map-widget types="512" language="de" centermap=""></map-widget>
 ```
 
 ### Attributes
-
-#### domain
-
-Type: select
-Options: "tourism"
 
 #### types
 
