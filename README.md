@@ -1,7 +1,6 @@
 # Generic Map to show Open Data Hub Skiarea Information
 
-This project is a rewrite taken from the repository webcomp-generic-map (thanks to pmoser). It is a webcomponent to display data from the [Open Data
-Hub](https://opendatahub.bz.it). 
+This project is a rewrite taken from the repository webcomp-generic-map (thanks to pmoser). It is a webcomponent to display data from the [Open Data Hub](https://opendatahub.bz.it). 
 
 The Open Data Hub Team wants to generate reusable and independent visualization
 components to display data from the Open Data Hub easily. Using these
@@ -21,7 +20,7 @@ components into any website.
 Include the Javascript file `dist/map_widget.min.js` in your HTML and define the web component like this:
 
 ```html
-<map-widget domain="mobility"></map-widget>
+<map-widget domain="tourism" types="512" language="de" centermap=""></map-widget>
 ```
 
 ### Attributes
@@ -29,14 +28,27 @@ Include the Javascript file `dist/map_widget.min.js` in your HTML and define the
 #### domain
 
 Type: select
-Options: "mobility", "tourism"
-Default: "mobility"
+Options: "tourism"
+Default: "tourism"
 
-#### station-types
+#### types
 
-Type: multiselect
-Options: "CreativeIndustry","EChargingStation","EChargingPlug"
-Default: []
+Type: bitmask
+Options: Refer to https://tourism.opendatahub.bz.it/api/ActivityTypes
+Default: ""
+
+#### language
+
+Type: string
+Options: "de,it,en"
+Default: "en"
+
+#### centermap
+
+Type: string
+Options: "latitude,longitude,zoomlevel"
+Default: ""
+
 
 ## Getting started
 
@@ -56,13 +68,13 @@ For a ready to use Docker environment with all prerequisites already installed a
 Get a copy of the repository:
 
 ```bash
-git clone https://github.com/noi-techpark/webcomp-generic-map.git
+git clone https://github.com/noi-techpark/webcomp-tourism-skiareas
 ```
 
 Change directory:
 
 ```bash
-cd webcomp-generic-map/
+cd  webcomp-tourism-skiareas/
 ```
 
 ### Dependencies
