@@ -324,9 +324,9 @@ class MapWidget extends LitElement {
         // });
 
         let iconskiarea = new L.Icon({
-          iconUrl: 'skiarea48.png',
-          iconSize: L.point(32, 32),
-          opacity:0.6
+          iconUrl: 'basic2-059_pin_location-512.png',
+          iconSize: L.point(48, 48),
+          opacity:0.8
         });
 
         let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';
