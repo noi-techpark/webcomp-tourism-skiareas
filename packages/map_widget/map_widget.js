@@ -324,7 +324,7 @@ class MapWidget extends LitElement {
         // });
 
         let iconskiarea = new L.Icon({
-          iconUrl: 'basic2-059_pin_location-512.png',
+          iconUrl: 'marker_pin.png',
           iconSize: L.point(48, 48),
           opacity:0.8
         });
