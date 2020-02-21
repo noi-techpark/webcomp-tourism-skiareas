@@ -116,19 +116,25 @@ class MapWidget extends LitElement {
           var activitysubtype = "";
 
           if(activity.SubType == "Seilbahn")
-            activitysubtype = "icon-seilbahn";
-          else if(activity.SubType == "Standseilbahn/Zahnradbahn")
-            activitysubtype = "icon-zahnradbahn";
+            activitysubtype = "iconSeilbahn";
+          else if(activity.SubType == "Standseilbahn/Zahnradbahn" || activity.SubType == "Schrägaufzug" || activity.SubType == "Unterirdische Bahn")
+            activitysubtype = "iconZahnrad";
           else if(activity.SubType == "Skilift")
-            activitysubtype = "icon-skilift";
+            activitysubtype = "iconSkilift";
           else if(activity.SubType == "Umlaufbahn")
-            activitysubtype = "icon-umlaufbahn";
+            activitysubtype = "iconUmlaufbahn";
           else if(activity.SubType == "Kabinenbahn")
-            activitysubtype = "icon-kabinenbahn";
+            activitysubtype = "iconKabinenbahn";
           else if(activity.SubType == "Sessellift")
-            activitysubtype = "icon-sessellift";
+            activitysubtype = "iconSessellift";
+          else if(activity.SubType == "Telemix")
+            activitysubtype = "iconTelemix";
+          else if(activity.SubType == "Förderband")
+            activitysubtype = "iconFoerderband"; 
+          else if(activity.SubType == "Zug")
+            activitysubtype = "iconZug"; 
           else
-            activitysubtype = "icon-sessellift";
+            activitysubtype = "iconSessellift";
 
           let fillChar = ''; //'<span class="icon icon-sessellift">test</span>'; //station.pcode ? '#' : '&nbsp;';
 
@@ -271,7 +277,7 @@ class MapWidget extends LitElement {
         if(skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
         {
            //Opening           
-           popupContSkiArea += '<div>' + "Geöffnet von: " + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " bis: " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
+           popupContSkiArea += '<div>' + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " - " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
            //BaseText          
           popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';              
         }
