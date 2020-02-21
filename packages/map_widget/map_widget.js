@@ -216,24 +216,16 @@ class MapWidget extends LitElement {
             ];
 
             let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + gpsinfosorted[key].Gpstype + '</i>';
-            popupCont += '<table>';
-            popupCont += '<tr>';
-            popupCont += '<td colspan="2">' + activity.Type + '</td>';
-            popupCont += '</tr>';            
-            popupCont += '<tr>';
-            popupCont += '<td>' + '<span class="icon ' + activitysubtype +'"></span>' + '</td>';
-            popupCont += '<td>' + activity.SubType + '</td>';
-            popupCont += '</tr>';
-            popupCont += '<tr>';
-            popupCont += '<td colspan="2">' + opened + '</td>';
-            popupCont += '</tr>';
+            popupCont += '<div>' + activity.Type + '</div>';
+            popupCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
+            popupCont += '<div>' + activity.SubType + '</div>';           
+            popupCont += '<div>' + opened + '</div>';            
+
             if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
-            {
-              popupCont += '<tr>';
-              popupCont += '<td colspan="2">' + activity["Detail." + this.propLanguage + ".BaseText"] + '</td>';
-              popupCont += '</tr>';
+            {              
+              popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
             }
-            popupCont += '</table></div>';
+            popupCont += '</div>';
 
             let popup = L.popup().setContent(popupCont);
 
@@ -274,18 +266,18 @@ class MapWidget extends LitElement {
             for (var i = 1; i < markerlatlng.itemcount; i++) {
 
               let popupLineCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
-              popupLineCont += '<table>';
-              popupLineCont += '<tr>';
-              popupLineCont += '<td colspan="2">' + activity.Type + '</td>';
-              popupLineCont += '</tr>';            
-              popupLineCont += '<tr>';
-              popupLineCont += '<td>' + '<span class="icon ' + activitysubtype +'"></span>' + '</td>';
-              popupLineCont += '<td>' + activity.SubType + '</td>';
-              popupLineCont += '</tr>';
-              popupLineCont += '<tr>';
-              popupLineCont += '<td colspan="2">' + opened + '</td>';
-              popupLineCont += '</tr>';              
-              popupLineCont += '</table></div>';
+              //popupLineCont += '<table>';
+              //popupLineCont += '<tr>';
+              popupLineCont += '<div>' + activity.Type + '</div><br />';
+              //popupLineCont += '</tr>';            
+              //popupLineCont += '<tr>';
+              popupLineCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
+              popupLineCont += '<div>' + activity.SubType + '</div><br />';
+              //popupLineCont += '</tr>';
+              //popupLineCont += '<tr>';
+              popupLineCont += '<div>' + opened + '</div>';
+              //popupLineCont += '</tr>';              
+              popupLineCont += '</div>';
 
               let popupline = L.popup().setContent(popupLineCont);
 
@@ -293,15 +285,22 @@ class MapWidget extends LitElement {
               var polyline = L.polyline(markerlatlng.items.elements.slice(i-1, i + 1), {
                 color: markerlatlng.items.opened,
                 opacity: 0.5,
-                smoothFactor: 1 
+                smoothFactor: 1,
+                weight: 6
               }).addTo(this.map).bindPopup(popupline);
 
               //polyline.on('mouseover', polyline.bindPopup(popupline));
               polyline.on('mouseover', function (e) {
+                this.setStyle({
+                  weight: 10
+                });
                 this.openPopup();
               });
               polyline.on('mouseout', function (e) {
-                  this.closePopup();
+                this.setStyle({
+                  weight: 6
+                });  
+                this.closePopup();
               });
             }            
           }
