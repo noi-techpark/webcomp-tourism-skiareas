@@ -55,9 +55,10 @@
           {
             "key": "centermap",
             "type": "text",
+            "label": "centermap: ex. 46.7728692,10.7916716,14",
             "required": false,
             "options": {                 
-              "default": "46.7728692,10.7916716,14"
+              "default": ""
             }
           }
       ]
