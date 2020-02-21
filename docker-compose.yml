@@ -4,10 +4,11 @@ services:
     app:
         build: 
             context: .
-            dockerfile: ./dockerfile-node-local
-        working_dir: /code/work
-        command: sh serve.sh
+            dockerfile: docker/Dockerfile
         volumes:
             - ./:/code
+        working_dir: /code
+        command: http-server dist
         ports:
-            - "8888:8000"
+            - "8080:8080"
+        tty: true
