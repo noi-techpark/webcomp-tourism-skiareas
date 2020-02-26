@@ -42,7 +42,7 @@ export async function fetchActivities(type, language) {
 		return callGet(config.API_BASE_URL_TOURISM,"/Activity", {
 			pagesize: 12000,
 			activitytype: type,
-			fields: "Id,GpsInfo,Type,SubType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText",
+			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText",
 			active: true,
 			language: language
 		})
