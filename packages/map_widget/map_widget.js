@@ -284,24 +284,23 @@ class MapWidget extends LitElement {
 
               var polyline = L.polyline(markerlatlng.items.elements.slice(i-1, i + 1), {
                 color: markerlatlng.items.opened,
-                opacity: 0.5,
+                opacity: 0.8,
                 smoothFactor: 1,
                 weight: 6
               }).addTo(this.map).bindPopup(popupline);
-
-              //polyline.on('mouseover', polyline.bindPopup(popupline));
-              polyline.on('mouseover', function (e) {
-                this.setStyle({
-                  weight: 10
-                });
-                this.openPopup();
-              });
-              polyline.on('mouseout', function (e) {
-                this.setStyle({
-                  weight: 6
-                });  
-                this.closePopup();
-              });
+              
+              // polyline.on('mouseover', function (e) {
+              //   this.setStyle({
+              //     weight: 10
+              //   });
+              //   this.openPopup();
+              // });
+              // polyline.on('mouseout', function (e) {
+              //   this.setStyle({
+              //     weight: 6
+              //   });  
+              //   this.closePopup();
+              // });
             }            
           }
             
