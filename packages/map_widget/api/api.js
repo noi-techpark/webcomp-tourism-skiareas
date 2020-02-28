@@ -55,6 +55,19 @@ export async function fetchActivities(type, language) {
 		});
 }
 
+export async function fetchMeasuringpoints(type, language) {	
+	return callGet(config.API_BASE_URL_TOURISM,"/Weather/Measuringpoint", {
+		fields: "Id,Latitude,Longitude,LastUpdate,SnowHeight,newSnowHeight,Temperature,Active,LastSnowDate,Shortname",
+	})
+	.then(response => {			
+		this.nodes = response.Items;
+	})
+	.catch(e => {
+		console.log(e)
+		throw e;
+	});
+}
+
 export async function fetchSkiAreas(language) {	
 	return callGet(config.API_BASE_URL_TOURISM,"/SkiArea", {
 		fields: "Id,Latitude,Longitude,SkiRegionName." + language + ",Detail." + language +".Title,Detail." + language + ".BaseText,ContactInfos" +  language + 

@@ -89,7 +89,64 @@ class MapWidget extends LitElement {
 
       this.nodes.map(activity => {
 
-        if(activity.GpsInfo && activity.GpsInfo.length > 0 && activity.Type == "Aufstiegsanlagen")
+        if(activity.Type == "Piste" && activity.GpsTrack && activity.GpsTrack.length > 0)
+        {
+         
+              Object.keys(activity.GpsTrack).forEach(key => {
+                if(activity.GpsTrack[key].Type == "detailed")
+                {
+                    var diffpiste = activity.PoiType;
+                    var pistecolor = 'red';
+
+                    if(diffpiste == "blau"){
+                      pistecolor = 'blue';
+                    }
+                    if(diffpiste == "schwarz"){
+                      pistecolor = 'black';
+                    }        
+                    
+                    var slopeopened = '<span style="background-color:green">Geöffnet</span>';
+                    if(activity.IsOpen == false)
+                    {
+                      slopeopened = '<span style="background-color:red">Geschlossen</span>';                
+                      //markerlatlng.items.opened = "red";
+                    }  
+
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+
+                    let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
+                    popupSlope += '<div>' + activity.Type + '</div>';                    
+                    popupSlope += '<div>' + activity.SubType + '</div>';           
+                    popupSlope += '<div>' + slopeopened + '</div>';            
+        
+                    if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
+                    {              
+                      popupSlope += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
+                    }
+                    popupSlope += '</div>';
+        
+                    let popupslope = L.popup().setContent(popupSlope);
+
+                    let gpx = new L2.GPX(url, {
+                          async: true,
+                          gpx_options: { parseElements: 'track' },
+                          polyline_options: { color: pistecolor },
+                          marker_options: { startIconUrl: null, endIconUrl: null },
+                          // marker_options: {
+                          //     startIconUrl: '../Content/images/pin-icon-start.png',
+                          //     endIconUrl: '../Content/images/pin-icon-end.png',
+                          //     shadowUrl: '../Content/images/pin-shadow.png'
+                          // }
+                      }).on('loaded', function (e) {
+                          //map.fitBounds(e.target.getBounds());
+                      }).addTo(this.map).bindPopup(popupslope);
+
+                      //this.map.addLayer(gpx).bindPopup(popupslope);
+                }
+              });
+      
+        }
+        else if(activity.GpsInfo && activity.GpsInfo.length > 0 && activity.Type == "Aufstiegsanlagen")
         {
 
           // if (! (activity.Type in this.types)) {
@@ -249,42 +306,7 @@ class MapWidget extends LitElement {
           }
             
         }
-        else if(activity.Type == "Piste" && activity.GpsTrack && activity.GpsTrack.length > 0)
-        {
-         
-              Object.keys(activity.GpsTrack).forEach(key => {
-                if(activity.GpsTrack[key].Type == "detailed")
-                {
-                    var diffpiste = activity.PoiType;
-                    var pistecolor = 'red';
-
-                    if(diffpiste == "blau"){
-                      pistecolor = 'blue';
-                    }
-                    if(diffpiste == "schwarz"){
-                      pistecolor = 'black';
-                    } 
-
-                    console.log(diffpiste);
-
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
-
-                    let gpx = new L2.GPX(url, {
-                          async: true,
-                          gpx_options: { parseElements: 'track' },
-                          polyline_options: { color: pistecolor }
-                          // marker_options: {
-                          //     startIconUrl: '../Content/images/pin-icon-start.png',
-                          //     endIconUrl: '../Content/images/pin-icon-end.png',
-                          //     shadowUrl: '../Content/images/pin-shadow.png'
-                          // }
-                      }).on('loaded', function (e) {
-                          //map.fitBounds(e.target.getBounds());
-                      }).addTo(this.map);
-                }
-              });
-      
-        }
+        
       });
       //Getting Skiareas
       await this.fetchSkiAreas(this.propLanguage);
