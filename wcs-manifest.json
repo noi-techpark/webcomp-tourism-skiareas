@@ -40,8 +40,8 @@
           "key": "types",
           "type": "select",
           "options": {
-            "values": ["512"],
-            "default": ["512"]
+            "values": ["512","768"],
+            "default": ["768"]
           }
         },
         {
