@@ -7,7 +7,7 @@
     "leaflet": "^1.4.0",
     "leaflet.markercluster": "^1.4.1",
     "lit-element": "^2.1.0",
-    "axios": "^0.19.0"
+    "axios": "^0.21.1"
   },
   "scripts": {
     "build": "webpack --config webpack.prod.js",
