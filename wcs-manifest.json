@@ -1,66 +1,79 @@
 {
-    "title": "Skiareas and Lifts Map",
-    "description": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
-    "descriptionAbstract": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
-    "license": "AGPL-3.0-or-later",
-    "copyrightHolders": [
+  "title": "Skiareas and Lifts Map",
+  "description": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
+  "descriptionAbstract": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
+  "license": "AGPL-3.0-or-later",
+  "copyrightHolders": [
+    {
+      "name": "NOI",
+      "email": "info@noi.bz.it",
+      "organization": "NOI S.p.A",
+      "organizationUrl": "https://noi.bz.it"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Rudi Thoeni",
+      "email": "r.thoeni@noi.bz.it",
+      "organization": "NOI S.p.A",
+      "organizationUrl": "https://noi.bz.it"
+    },
+    {
+      "name": "Peter Moser",
+      "email": "p.moser@noi.bz.it",
+      "organization": "NOI S.p.A",
+      "organizationUrl": "https://noi.bz.it"
+    }
+  ],
+  "image": "wskiarea-logo.png",
+  "searchTags": [
+    "map"
+  ],
+  "dist": {
+    "basePath": "dist",
+    "files": [
+      "map_widget.min.js"
+    ]
+  },
+  "configuration": {
+    "tagName": "map-widget",
+    "options": [
       {
-        "name": "NOI",
-        "email": "info@noi.bz.it",
-        "organization": "NOI S.p.A",
-        "organizationUrl": "https://noi.bz.it"
-      }
-    ],
-    "authors": [
-      {
-        "name": "Rudi Thoeni",
-        "email": "r.thoeni@noi.bz.it",
-        "organization": "NOI S.p.A",
-        "organizationUrl": "https://noi.bz.it"
+        "key": "types",
+        "type": "select",
+        "options": {
+          "values": [
+            "512",
+            "768"
+          ],
+          "default": [
+            "768"
+          ]
+        }
       },
       {
-        "name": "Peter Moser",
-        "email": "p.moser@noi.bz.it",
-        "organization": "NOI S.p.A",
-        "organizationUrl": "https://noi.bz.it"
+        "key": "language",
+        "type": "multiselect",
+        "options": {
+          "values": [
+            "de",
+            "it",
+            "en"
+          ],
+          "default": [
+            "de"
+          ]
+        }
+      },
+      {
+        "key": "centermap",
+        "type": "text",
+        "label": "centermap: ex. 46.7728692,10.7916716,14",
+        "required": false,
+        "options": {
+          "default": ""
+        }
       }
-    ],
-    "image": "wskiarea-logo.png",
-    "searchTags": ["map"],
-    "dist": {
-      "basePath": "dist",
-      "files": [
-        "map_widget.min.js"
-      ]
-    },
-    "configuration": {
-      "tagName": "map-widget",
-      "options": [        
-        {
-          "key": "types",
-          "type": "select",
-          "options": {
-            "values": ["512","768"],
-            "default": ["768"]
-          }
-        },
-        {
-            "key": "language",
-            "type": "multiselect",
-            "options": {
-              "values": ["de","it","en"],
-              "default": ["de"]
-            }
-          },
-          {
-            "key": "centermap",
-            "type": "text",
-            "label": "centermap: ex. 46.7728692,10.7916716,14",
-            "required": false,
-            "options": {                 
-              "default": ""
-            }
-          }
-      ]
-    }
+    ]
   }
+}
