@@ -8,7 +8,7 @@
     "bc": "lerna run --parallel --stream build",
     "wc": "lerna run --parallel --stream watch",
     "demo": "lerna run --parallel --stream demo",
-    "build-components": "lerna run --parallel --stream build",
+    "build": "lerna run --parallel --stream build",
     "watch-components": "lerna run --parallel --stream watch"
   },
   "devDependencies": {
