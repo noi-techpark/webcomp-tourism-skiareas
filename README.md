@@ -4,12 +4,12 @@
 
 This project is a rewrite taken from the repository webcomp-generic-map (thanks
 to pmoser). It is a webcomponent to display data from the [Open Data
-Hub](https://opendatahub.bz.it). 
+Hub](https://opendatahub.bz.it).
 
 The Open Data Hub Team wants to generate reusable and independent visualization
 components to display data from the Open Data Hub easily. Using these
 webcomponents, a developer can easily integrate the functionality of the single
-components into any website. 
+components into any website.
 
 Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint
 
@@ -170,7 +170,7 @@ docker-compose run --rm app /bin/bash -c "yarn run build"
 
 ### Support
 
-For support, please contact [info@opendatahub.bz.it](mailto:info@opendatahub.bz.it).
+For support, please contact [help@opendatahub.bz.it](mailto:help@opendatahub.bz.it).
 
 ### Contributing
 
