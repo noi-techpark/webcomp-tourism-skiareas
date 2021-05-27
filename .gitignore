@@ -1,1 +1,26 @@
+diy/
+node_modules/
+work/scripts/
+.vscode/
+.env
+
+# General
+.DS_Store
+
+# Editors
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Project
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Do not ignore dist folders, since we need them to release the web component on
+# the main store

@@ -1,19 +1,44 @@
 # Generic Map to show Open Data Hub Skiarea Information
 
-This project is a rewrite taken from the repository webcomp-generic-map (thanks to pmoser). It is a webcomponent to display data from the [Open Data Hub](https://opendatahub.bz.it). 
+[![REUSE status](https://api.reuse.software/badge/github.com/noi-techpark/webcomp-tourism-skiareas)](https://api.reuse.software/info/github.com/noi-techpark/webcomp-tourism-skiareas)
+
+This project is a rewrite taken from the repository webcomp-generic-map (thanks
+to pmoser). It is a webcomponent to display data from the [Open Data
+Hub](https://opendatahub.bz.it). 
 
 The Open Data Hub Team wants to generate reusable and independent visualization
 components to display data from the Open Data Hub easily. Using these
 webcomponents, a developer can easily integrate the functionality of the single
 components into any website. 
 
-## Table of contents
+Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint
 
-- [Usage](#usage)
-- [Gettings started](#getting-started)
-- [Deployment](#deployment)
-- [Docker environment](#docker-environment)
-- [Information](#information)
+Do you want to see it in action? Go to our [web component
+store](https://webcomponents.opendatahub.bz.it/webcomponent/8282479b-dc13-5012-939f-7a0196348dca)!
+
+- [Generic Map to show Open Data Hub Skiarea Information](#generic-map-to-show-open-data-hub-skiarea-information)
+  - [Usage](#usage)
+    - [Attributes](#attributes)
+      - [types](#types)
+      - [language](#language)
+      - [centermap](#centermap)
+  - [Getting started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Source code](#source-code)
+    - [Dependencies](#dependencies)
+    - [Build](#build)
+  - [Deployment](#deployment)
+  - [Docker environment](#docker-environment)
+    - [Installation](#installation)
+    - [Dependenices](#dependenices)
+    - [Start and stop the containers](#start-and-stop-the-containers)
+    - [Running commands inside the container](#running-commands-inside-the-container)
+  - [Information](#information)
+    - [Support](#support)
+    - [Contributing](#contributing)
+    - [Documentation](#documentation)
+    - [Boilerplate](#boilerplate)
+    - [License](#license)
 
 ## Usage
 
