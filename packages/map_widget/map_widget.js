@@ -359,7 +359,7 @@ class MapWidget extends LitElement {
       disableClusteringAtZoom: 13,
       iconCreateFunction: function(cluster) {
         return L.divIcon({
-          html: '<div class="marker_cluster__marker">' + parseInt(cluster.getChildCount() / 2) + '</div>',
+          html: '<div class="marker_cluster__marker">' + cluster.getChildCount() + '</div>',
           iconSize: L.point(32, 32)
         });
       }
