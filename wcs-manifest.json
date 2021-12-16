@@ -60,9 +60,7 @@
             "it",
             "en"
           ],
-          "default": [
-            "de"
-          ]
+          "default": "de"          
         }
       },
       {
