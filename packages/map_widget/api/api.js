@@ -44,7 +44,8 @@ export async function fetchActivities(type, language) {
 			activitytype: type,
 			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText",
 			active: true,
-			language: language
+			language: language,
+			origin: "webcomp-skiarea-map"
 		})
 		.then(response => {			
 			this.nodes = response.Items;
@@ -58,6 +59,7 @@ export async function fetchActivities(type, language) {
 export async function fetchMeasuringpoints(type, language) {	
 	return callGet(config.API_BASE_URL_TOURISM,"/Weather/Measuringpoint", {
 		fields: "Id,Latitude,Longitude,LastUpdate,SnowHeight,newSnowHeight,Temperature,Active,LastSnowDate,Shortname",
+		origin: "webcomp-skiarea-map"
 	})
 	.then(response => {			
 		this.nodes = response.Items;
@@ -74,7 +76,8 @@ export async function fetchSkiAreas(language) {
 				",Active,OperationSchedule[0].Start,OperationSchedule[0].Stop" +
 				",TotalSlopeKm,SlopeKmBlue,SlopeKmRed,SlopeKmBlack,LiftCount",
 		active: true,
-		language: language
+		language: language,
+		origin: "webcomp-skiarea-map"
 	})
 	.then(response => {			
 		this.nodes = response;
