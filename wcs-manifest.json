@@ -64,7 +64,9 @@
             "it",
             "en"
           ],
-          "default": "en"          
+          "default": [
+            "en"
+          ]
         }
       },
       {
