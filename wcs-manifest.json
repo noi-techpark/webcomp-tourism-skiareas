@@ -55,7 +55,7 @@
       },
       {
         "key": "language",
-        "type": "multiselect",
+        "type": "select",
         "label": "Two letter key for the language to be used, if omitted the widget will use the lang attribute of the closest parent element. Fallback is `en`",
         "required": false,
         "options": {
