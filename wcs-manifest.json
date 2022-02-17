@@ -41,6 +41,8 @@
       {
         "key": "types",
         "type": "select",
+        "label": "Filter on Lifts 512, Filter on Lifts and Slopes 768, default is 768",
+        "required": false,
         "options": {
           "values": [
             "512",
@@ -54,15 +56,15 @@
       {
         "key": "language",
         "type": "multiselect",
+        "label": "Two letter key for the language to be used, if omitted the widget will use the lang attribute of the closest parent element. Fallback is `en`",
+        "required": false,
         "options": {
           "values": [
             "de",
             "it",
             "en"
           ],
-          "default": [
-            "de"
-          ]
+          "default": "en"          
         }
       },
       {
