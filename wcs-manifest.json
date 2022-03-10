@@ -3,6 +3,7 @@
   "description": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
   "descriptionAbstract": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
   "license": "AGPL-3.0-or-later",
+  "repositoryUrl": "https://github.com/noi-techpark/webcomp-tourism-skiareas.git",
   "copyrightHolders": [
     {
       "name": "NOI",
@@ -25,7 +26,7 @@
       "organizationUrl": "https://noi.bz.it"
     }
   ],
-  "image": "wskiarea-logo.png",
+  "image": "wcs-logo.png",
   "searchTags": [
     "map"
   ],
