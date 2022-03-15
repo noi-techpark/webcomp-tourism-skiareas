@@ -76,7 +76,7 @@ on your local machine for development and testing purposes.
 
 To build the project, the following prerequisites must be met:
 
-- Node 12 / Yarn 1
+- Node 12 / NPM 8.1.2
 
 For a ready to use Docker environment with all prerequisites already installed and prepared, you can check out the [Docker environment](#docker-environment) section.
 
@@ -99,7 +99,7 @@ cd  webcomp-tourism-skiareas/
 Download all dependencies:
 
 ```bash
-yarn install
+npm install
 ```
 
 ### Build
@@ -107,7 +107,7 @@ yarn install
 Build and start the project:
 
 ```bash
-yarn run watch
+npm run watch
 ```
 
 The application will be served and can be accessed at [http://localhost:8080](http://localhost:8080).
@@ -117,7 +117,7 @@ The application will be served and can be accessed at [http://localhost:8080](ht
 To create the distributable files, execute the following command:
 
 ```bash
-yarn run build
+npm run build
 ```
 
 ## Docker environment
@@ -135,7 +135,7 @@ Install [Docker](https://docs.docker.com/install/) (with Docker Compose) locally
 First, install all dependencies:
 
 ```bash
-docker-compose run --rm app /bin/bash -c "yarn install"
+docker-compose run --rm app /bin/bash -c "npm install"
 ```
 
 ### Start and stop the containers
@@ -163,7 +163,7 @@ docker-compose run --rm app /bin/bash -c "..."
 Some examples are:
 
 ```bash
-docker-compose run --rm app /bin/bash -c "yarn run build"
+docker-compose run --rm app /bin/bash -c "npm run build"
 ```
 
 ## Information

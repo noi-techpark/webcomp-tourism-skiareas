@@ -7,7 +7,7 @@ services:
     volumes:
       - ./:/code
     working_dir: /code
-    command: sh -c "test -d node_modules || yarn; yarn wc"
+    command: sh -c "test -d node_modules || npm install; npm run wc"
   serve:
     image: python:3.6-alpine
     volumes:
