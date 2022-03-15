@@ -1,6 +1,7 @@
 # Generic Map to show Open Data Hub Skiarea Information
 
 [![REUSE status](https://api.reuse.software/badge/github.com/noi-techpark/webcomp-tourism-skiareas)](https://api.reuse.software/info/github.com/noi-techpark/webcomp-tourism-skiareas)
+[![CI/CD](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml/badge.svg)](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml)
 
 This project is a rewrite taken from the repository webcomp-generic-map (thanks
 to pmoser). It is a webcomponent to display data from the [Open Data
@@ -174,17 +175,7 @@ For support, please contact [help@opendatahub.bz.it](mailto:help@opendatahub.bz.
 
 ### Contributing
 
-If you'd like to contribute, please follow the following instructions:
-
-- Fork the repository.
-
-- Checkout a topic branch from the `development` branch.
-
-- Make sure the tests are passing.
-
-- Create a pull request against the `development` branch.
-
-A more detailed description can be found here: [https://github.com/noi-techpark/documentation/blob/master/contributors.md](https://github.com/noi-techpark/documentation/blob/master/contributors.md).
+If you'd like to contribute, please follow the Contributor Guidelines that can be found at [https://github.com/noi-techpark/odh-docs/wiki/Contributor-Guidelines%3A-Getting-started](https://github.com/noi-techpark/odh-docs/wiki/Contributor-Guidelines%3A-Getting-started).
 
 ### Documentation
 
