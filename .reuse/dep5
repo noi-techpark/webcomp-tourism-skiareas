@@ -7,15 +7,7 @@ Files: packages/* work/* dist/*.js odh-*.js
 Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
 License: AGPL-3.0-or-later
 
-Files: *.md *.txt .env.*
-Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
-License: CC0-1.0
-
-Files: infrastructure/*
-Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
-License: CC0-1.0
-
-Files: .editorconfig .gitignore docker-compose.yml package.json wcs-manifest.json yarn.lock webpack.* *-logo.png lerna.json
+Files: *.md *.txt .env.* package-lock.json infrastructure/* .github/workflows/* .editorconfig .gitignore docker-compose.yml package.json wcs-manifest.json yarn.lock webpack.* *-logo.png lerna.json
 Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
 License: CC0-1.0
 
