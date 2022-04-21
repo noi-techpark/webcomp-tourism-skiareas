@@ -71,6 +71,22 @@
         }
       },
       {
+        "key": "source",
+        "type": "select",
+        "label": "Data provider Default is `lts,dss`",
+        "required": false,
+        "options": {
+          "values": [
+            "lts",
+            "dss",
+            "lts,dss"
+          ],
+          "default": [
+            "lts,dss"
+          ]
+        }
+      },
+      {
         "key": "centermap",
         "type": "text",
         "label": "centermap: ex. 46.7728692,10.7916716,14",

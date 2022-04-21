@@ -25,6 +25,10 @@ class MapWidget extends LitElement {
         type: String,
         attribute: 'language'
       },
+      propSource: {
+        type: String,
+        attribute: 'source'
+      },
       propCenterMap: {
         type: String,
         attribute: 'centermap'
@@ -85,11 +89,11 @@ class MapWidget extends LitElement {
 
     let columns_layer_array = [];
     
-      await this.fetchActivities(this.propTypes, this.propLanguage);
+      await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource);
 
       this.nodes.map(activity => {
 
-        if(activity.Type == "Piste" && activity.GpsTrack && activity.GpsTrack.length > 0)
+        if(activity.SubType == "Skirundtouren Pisten" && activity.GpsTrack && activity.GpsTrack.length > 0)
         {
          
               Object.keys(activity.GpsTrack).forEach(key => {
@@ -112,7 +116,7 @@ class MapWidget extends LitElement {
                       //markerlatlng.items.opened = "red";
                     }  
 
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');;
 
                     let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
                     popupSlope += '<div>' + activity.Type + '</div>';                    
@@ -146,7 +150,7 @@ class MapWidget extends LitElement {
               });
       
         }
-        else if(activity.GpsInfo && activity.GpsInfo.length > 0 && activity.Type == "Aufstiegsanlagen")
+        else if(activity.GpsInfo && activity.GpsInfo.length > 0 && activity.SubType == "Aufstiegsanlagen")
         {
 
           // if (! (activity.Type in this.types)) {
@@ -163,13 +167,15 @@ class MapWidget extends LitElement {
           //Sort activityGpsInfo by Talstation, Mittelstation, Bergstation
           var gpsinfosorted = [];
 
-          if(activity.GpsInfo.find(x => x.Gpstype == "Talstation"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "Talstation"));
-          if(activity.GpsInfo.find(x => x.Gpstype == "Mittelstation"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "Mittelstation"));
-          if(activity.GpsInfo.find(x => x.Gpstype == "Bergstation"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "Bergstation"));
+          if(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"));
+          if(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"));
+          if(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));
 
+
+          //TODO extract from ODHTags
           var activitysubtype = "";
 
           if(activity.SubType == "Seilbahn")
