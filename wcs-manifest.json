@@ -42,10 +42,11 @@
       {
         "key": "types",
         "type": "select",
-        "label": "Filter on Lifts 512, Filter on Lifts and Slopes 768, default is 768",
+        "label": "Bitmask Filter on Slopes 256, Lifts 512, Filter on Lifts and Slopes 768, default is 768",
         "required": false,
         "options": {
           "values": [
+            "256",
             "512",
             "768"
           ],

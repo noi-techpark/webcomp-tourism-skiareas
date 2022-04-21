@@ -99,13 +99,13 @@ class MapWidget extends LitElement {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var diffpiste = activity.PoiType;
+                    var diffpiste = activity.Ratings.Difficulty;
                     var pistecolor = 'red';
 
-                    if(diffpiste == "blau"){
+                    if(diffpiste == "2"){
                       pistecolor = 'blue';
                     }
-                    if(diffpiste == "schwarz"){
+                    if(diffpiste == "6"){
                       pistecolor = 'black';
                     }        
                     
@@ -115,12 +115,20 @@ class MapWidget extends LitElement {
                       slopeopened = '<span style="background-color:red">Geschlossen</span>';                
                       //markerlatlng.items.opened = "red";
                     }  
+                    
+                    var iskml = false;
 
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');;
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');
+
+                    if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
+                    {
+                      url = 'https://api.tourism.testingmachine.eu/v1/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
+                      iskml = true;
+                    }
 
                     let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
-                    popupSlope += '<div>' + activity.Type + '</div>';                    
-                    popupSlope += '<div>' + activity.SubType + '</div>';           
+                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';                    
+                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';           
                     popupSlope += '<div>' + slopeopened + '</div>';            
         
                     if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
@@ -176,25 +184,37 @@ class MapWidget extends LitElement {
 
 
           //TODO extract from ODHTags
+          var assignedlifttype = "";
+
+          if(activity.SmgTags)
+          {
+            activity.SmgTags.forEach(element => {
+              if(element != "aufstiegsanlagen" && element != "anderes" && element != "weitere aufstiegsanlagen"){
+                assignedlifttype = element;
+              }
+          });
+          }
+          
+
           var activitysubtype = "";
 
-          if(activity.SubType == "Seilbahn")
+          if(assignedlifttype == "seilbahn")
             activitysubtype = "iconSeilbahn";
-          else if(activity.SubType == "Standseilbahn/Zahnradbahn" || activity.SubType == "Schrägaufzug" || activity.SubType == "Unterirdische Bahn")
+          else if(assignedlifttype == "standseilbahn/zahnradbahn" || assignedlifttype == "schrägaufzug" || assignedlifttype == "unterirdische bahn")
             activitysubtype = "iconZahnrad";
-          else if(activity.SubType == "Skilift")
+          else if(assignedlifttype == "skilift")
             activitysubtype = "iconSkilift";
-          else if(activity.SubType == "Umlaufbahn")
+          else if(assignedlifttype == "umlaufbahn")
             activitysubtype = "iconUmlaufbahn";
-          else if(activity.SubType == "Kabinenbahn")
+          else if(assignedlifttype == "kabinenbahn")
             activitysubtype = "iconKabinenbahn";
-          else if(activity.SubType == "Sessellift")
+          else if(assignedlifttype == "sessellift")
             activitysubtype = "iconSessellift";
-          else if(activity.SubType == "Telemix")
+          else if(assignedlifttype == "telemix")
             activitysubtype = "iconTelemix";
-          else if(activity.SubType == "Förderband")
+          else if(assignedlifttype == "förderband")
             activitysubtype = "iconFoerderband"; 
-          else if(activity.SubType == "Zug")
+          else if(assignedlifttype == "zug")
             activitysubtype = "iconZug"; 
           else
             activitysubtype = "iconSessellift";
@@ -222,9 +242,9 @@ class MapWidget extends LitElement {
             ];
 
             let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + gpsinfosorted[key].Gpstype + '</i>';
-            popupCont += '<div>' + activity.Type + '</div>';
+            popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
             popupCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
-            popupCont += '<div>' + activity.SubType + '</div>';           
+            popupCont += '<div>' + assignedlifttype + '</div>';           
             popupCont += '<div>' + opened + '</div>';            
 
             if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
@@ -274,11 +294,11 @@ class MapWidget extends LitElement {
               let popupLineCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
               //popupLineCont += '<table>';
               //popupLineCont += '<tr>';
-              popupLineCont += '<div>' + activity.Type + '</div><br />';
+              popupLineCont += '<div>' + activity.SubType + '</div><br />';
               //popupLineCont += '</tr>';            
               //popupLineCont += '<tr>';
               popupLineCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
-              popupLineCont += '<div>' + activity.SubType + '</div><br />';
+              popupLineCont += '<div>' + assignedlifttype + '</div><br />';
               //popupLineCont += '</tr>';
               //popupLineCont += '<tr>';
               popupLineCont += '<div>' + opened + '</div>';
