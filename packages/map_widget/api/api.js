@@ -43,7 +43,7 @@ export async function fetchActivities(type, language, source) {
 		return callGet(config.API_BASE_URL_TOURISM,"/ODHActivityPoi", {
 			pagesize: 12000,
 			activitytype: type,
-			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText,Source,SmgTags,Ratings.Difficulty",
+			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText,Source,SmgTags,Ratings.Difficulty,AdditionalPoiInfos",
 			active: true,
 			language: language,
 			source: source,

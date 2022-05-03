@@ -99,11 +99,19 @@ class MapWidget extends LitElement {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var diffpiste = activity.Ratings.Difficulty;
-                    var pistecolor = 'red';
+                    var diffpiste = "20";
+                    var pistecolor = 'grey';
+
+                    if(activity.Ratings && activity.Ratings.Difficulty)
+                    {
+                      diffpiste = activity.Ratings.Difficulty;
+                    }
 
                     if(diffpiste == "2"){
                       pistecolor = 'blue';
+                    }
+                    if(diffpiste == "4"){
+                      pistecolor = 'red';
                     }
                     if(diffpiste == "6"){
                       pistecolor = 'black';
@@ -122,7 +130,7 @@ class MapWidget extends LitElement {
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
-                      url = 'https://api.tourism.testingmachine.eu/v1/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
+                      url = 'https://images.tourism.testingmachine.eu/api/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
                       iskml = true;
                     }
 
