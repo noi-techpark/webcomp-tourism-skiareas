@@ -176,13 +176,18 @@ class MapWidget extends LitElement {
                           // Create new kml overlay
                           const parser = new DOMParser();
                           const kml = parser.parseFromString(kmltext, 'text/xml');
-                          const track = new L3.KML(kml);
-                          //map.addLayer(track);
+                          const track = new L.KML(kml, { 
+                            async: true,
+                            color: pistecolor
+                          }).on('loaded', function (e) {                            
+                        }).addTo(this.map).bindPopup(popupslope);  //.setStyle({color: pistecolor })
+                        
+                          //this.map.addLayer(track);
       
                           // Adjust map to show the kml
                           //const bounds = track.getBounds();
                           //map.fitBounds(bounds);
-                      }).addTo(this.map); //.bindPopup(popupslope);                 
+                      }); //.addTo(this.map); //.bindPopup(popupslope);                 
                     }
 
 
@@ -192,30 +197,8 @@ class MapWidget extends LitElement {
               });
       
         }
-        else if(activity.GpsInfo && activity.GpsInfo.length > 0 && activity.SubType == "Aufstiegsanlagen")
+        else if(((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && activity.SubType == "Aufstiegsanlagen")
         {
-
-          // if (! (activity.Type in this.types)) {
-          //   let cnt = Object.keys(this.types).length
-          //   this.types[activity.Type] = rainbow(40000, Math.random() * 40000);
-          // }
-
-          var markerlatlng = {};
-          markerlatlng.itemcount = activity.GpsInfo.length;
-          markerlatlng.items = {};
-          markerlatlng.items.opened = "green";
-          markerlatlng.items.elements = [];
-
-          //Sort activityGpsInfo by Talstation, Mittelstation, Bergstation
-          var gpsinfosorted = [];
-
-          if(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"));
-          if(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"));
-          if(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));
-
 
           //TODO extract from ODHTags
           var assignedlifttype = "";
@@ -228,7 +211,6 @@ class MapWidget extends LitElement {
               }
           });
           }
-          
 
           var activitysubtype = "";
 
@@ -261,12 +243,32 @@ class MapWidget extends LitElement {
             iconSize: L.point(17, 17)
           });
 
+          var markerlatlng = {};
+          markerlatlng.itemcount = activity.GpsInfo.length;
+          markerlatlng.items = {};
+          markerlatlng.items.opened = "green";
+          markerlatlng.items.elements = [];
+
           var opened = '<span style="background-color:green">Geöffnet</span>';
           if(activity.IsOpen == false)
           {
             opened = '<span style="background-color:red">Geschlossen</span>';                
             markerlatlng.items.opened = "red";
           }     
+
+         if(activity.Source == 'lts')
+         {
+         
+
+          //Sort activityGpsInfo by Talstation, Mittelstation, Bergstation
+          var gpsinfosorted = [];
+
+          if(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"));
+          if(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"));
+          if(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"))
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));                   
 
           Object.keys(gpsinfosorted).forEach(key => {
 
@@ -363,9 +365,77 @@ class MapWidget extends LitElement {
               // });
             }            
           }
-            
-        }
-        
+        }         
+        else if(activity.Source == 'dss')
+        {          
+          
+          Object.keys(activity.GpsTrack).forEach(key => {
+            if(activity.GpsTrack[key].Type == "detailed")
+            {
+
+              let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
+              popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
+              popupCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
+              popupCont += '<div>' + assignedlifttype + '</div>';           
+              popupCont += '<div>' + opened + '</div>';            
+  
+              if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
+              {              
+                popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
+              }
+              popupCont += '</div>';
+  
+              let popup = L.popup().setContent(popupCont);
+  
+              // let marker = L.marker(pos, {
+              //   icon: icon,
+              // }).bindPopup(popup);
+  
+              // columns_layer_array.push(marker);
+  
+              //markerlatlng.items.elements.push(marker.getLatLng());
+ 
+              var iskml = false;
+              var url = '';
+
+                if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
+                {
+                  url = 'https://images.tourism.testingmachine.eu/api/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
+                  iskml = true;
+                }
+
+                if(iskml)
+                {
+                  console.log("kml parsing lift");
+
+                  fetch(url)
+                  .then(res => res.text())
+                  .then(kmltext => {
+                      // Create new kml overlay
+                      const parser = new DOMParser();
+                      const kml = parser.parseFromString(kmltext, 'text/xml');
+                      const track = new L.KML(kml, { 
+                        async: true
+                        //color: pistecolor
+                      }).on('loaded', function (e) {                            
+                    }).setStyle({color: 'red' }).addTo(this.map).bindPopup(popup);  //.setStyle({color: pistecolor })
+                    
+                      //this.map.addLayer(track);
+  
+                      // Adjust map to show the kml
+                      //const bounds = track.getBounds();
+                      //map.fitBounds(bounds);
+                  }); //.addTo(this.map); //.bindPopup(popupslope);                 
+                }
+
+
+
+                  //this.map.addLayer(gpx).bindPopup(popupslope);
+            }
+          });
+
+        }         
+       }        
       });
       //Getting Skiareas
       await this.fetchSkiAreas(this.propLanguage);
@@ -413,7 +483,7 @@ class MapWidget extends LitElement {
     let columns_layer = L.layerGroup(columns_layer_array, {});
 
     /** Prepare the cluster group for station markers */
-    this.layer_columns = new leaflet_mrkcls.MarkerClusterGroup({
+    this.layer_columns = new L.markerClusterGroup({
       showCoverageOnHover: false,
       chunkedLoading: true,
       disableClusteringAtZoom: 13,
