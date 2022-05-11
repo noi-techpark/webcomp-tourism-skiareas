@@ -8,6 +8,7 @@ import { getStyle, rainbow } from './utils.js';
 import { fetchActivities,fetchSkiAreas } from './api/api.js';
 import moment from 'moment';
 import L2 from 'leaflet-gpx';
+import L3 from 'leaflet-kml';
 
 class MapWidget extends LitElement {
 
@@ -125,6 +126,7 @@ class MapWidget extends LitElement {
                     }  
                     
                     var iskml = false;
+                    var isgpx = true;
 
                     var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');
 
@@ -132,6 +134,7 @@ class MapWidget extends LitElement {
                     {
                       url = 'https://images.tourism.testingmachine.eu/api/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
                       iskml = true;
+                      isgpx = false;
                     }
 
                     let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
@@ -147,19 +150,42 @@ class MapWidget extends LitElement {
         
                     let popupslope = L.popup().setContent(popupSlope);
 
-                    let gpx = new L2.GPX(url, {
-                          async: true,
-                          gpx_options: { parseElements: 'track' },
-                          polyline_options: { color: pistecolor },
-                          marker_options: { startIconUrl: null, endIconUrl: null },
-                          // marker_options: {
-                          //     startIconUrl: '../Content/images/pin-icon-start.png',
-                          //     endIconUrl: '../Content/images/pin-icon-end.png',
-                          //     shadowUrl: '../Content/images/pin-shadow.png'
-                          // }
-                      }).on('loaded', function (e) {
-                          //map.fitBounds(e.target.getBounds());
-                      }).addTo(this.map).bindPopup(popupslope);
+                    if(isgpx){
+                      let gpx = new L2.GPX(url, {
+                        async: true,
+                        gpx_options: { parseElements: 'track' },
+                        polyline_options: { color: pistecolor },
+                        marker_options: { startIconUrl: null, endIconUrl: null },
+                        // marker_options: {
+                        //     startIconUrl: '../Content/images/pin-icon-start.png',
+                        //     endIconUrl: '../Content/images/pin-icon-end.png',
+                        //     shadowUrl: '../Content/images/pin-shadow.png'
+                        // }
+                    }).on('loaded', function (e) {
+                        //map.fitBounds(e.target.getBounds());
+                    }).addTo(this.map).bindPopup(popupslope);
+                    }
+
+                    if(iskml){
+
+                      console.log("kml parsing");
+
+                      fetch(url)
+                      .then(res => res.text())
+                      .then(kmltext => {
+                          // Create new kml overlay
+                          const parser = new DOMParser();
+                          const kml = parser.parseFromString(kmltext, 'text/xml');
+                          const track = new L3.KML(kml);
+                          //map.addLayer(track);
+      
+                          // Adjust map to show the kml
+                          //const bounds = track.getBounds();
+                          //map.fitBounds(bounds);
+                      }).addTo(this.map); //.bindPopup(popupslope);                 
+                    }
+
+
 
                       //this.map.addLayer(gpx).bindPopup(popupslope);
                 }
