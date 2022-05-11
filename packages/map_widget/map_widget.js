@@ -166,8 +166,8 @@ class MapWidget extends LitElement {
                     }).addTo(this.map).bindPopup(popupslope);
                     }
 
-                    if(iskml){
-
+                    if(iskml)
+                    {
                       console.log("kml parsing");
 
                       fetch(url)
