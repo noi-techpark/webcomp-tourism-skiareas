@@ -300,27 +300,27 @@ class MapWidget extends LitElement {
             markerlatlng.items.elements.push(marker.getLatLng());
 
             //Gps Track on Map
-            // if(activity.GpsTrack && activity.GpsTrack.length > 0)
-            // {                  
-            //   Object.keys(activity.GpsTrack).forEach(key => {
-            //     if(activity.GpsTrack[key].Type == "detailed")
-            //     {
-            //         var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+            if(activity.GpsTrack && activity.GpsTrack.length > 0)
+            {                  
+              Object.keys(activity.GpsTrack).forEach(key => {
+                if(activity.GpsTrack[key].Type == "detailed")
+                {
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
 
-            //         let gpx = new L2.GPX(url, {
-            //               async: true,
-            //               gpx_options: { parseElements: 'track' }
-            //               // marker_options: {
-            //               //     startIconUrl: '../Content/images/pin-icon-start.png',
-            //               //     endIconUrl: '../Content/images/pin-icon-end.png',
-            //               //     shadowUrl: '../Content/images/pin-shadow.png'
-            //               // }
-            //           }).on('loaded', function (e) {
-            //               //map.fitBounds(e.target.getBounds());
-            //           }).addTo(this.map);
-            //     }
-            //   });
-            // }
+                    let gpx = new L2.GPX(url, {
+                          async: true,
+                          gpx_options: { parseElements: 'track' }
+                          // marker_options: {
+                          //     startIconUrl: '../Content/images/pin-icon-start.png',
+                          //     endIconUrl: '../Content/images/pin-icon-end.png',
+                          //     shadowUrl: '../Content/images/pin-shadow.png'
+                          // }
+                      }).on('loaded', function (e) {
+                          //map.fitBounds(e.target.getBounds());
+                      }).addTo(this.map);
+                }
+              });
+            }
 
           });
           if(markerlatlng.itemcount > 1){
