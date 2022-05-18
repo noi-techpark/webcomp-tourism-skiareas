@@ -132,7 +132,7 @@ class MapWidget extends LitElement {
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
-                      url = 'https://images.tourism.testingmachine.eu/api/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
+                      url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCached/' + activity.GpsTrack[key].GpxTrackUrl;
                       iskml = true;
                       isgpx = false;
                     }
@@ -400,7 +400,7 @@ class MapWidget extends LitElement {
 
                 if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                 {
-                  url = 'https://images.tourism.testingmachine.eu/api/ODHProxy/' + activity.GpsTrack[key].GpxTrackUrl;
+                  url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCached/' + activity.GpsTrack[key].GpxTrackUrl;
                   iskml = true;
                 }
 
