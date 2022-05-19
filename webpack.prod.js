@@ -1,14 +1,12 @@
-const path = require('path');
+var path = require('path');
 
 module.exports = {
-  mode: 'development',
-  entry: './map_widget.js',
-  watch: true,
+  mode: 'production',
+  entry: './packages/map_widget/map_widget.js',
   output: {
-    path: path.resolve(__dirname, '../../work/scripts'),
-    filename: 'map_widget.js'
+    path: path.resolve(__dirname, './dist'),
+    filename: 'map_widget.min.js'
   },
-  devtool: 'inline-source-map',
   module: {
     rules: [
       {

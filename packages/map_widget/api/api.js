@@ -39,13 +39,14 @@ export async function fetchStations(type) {
 		});
 	}
 
-export async function fetchActivities(type, language) {	
-		return callGet(config.API_BASE_URL_TOURISM,"/Activity", {
+export async function fetchActivities(type, language, source) {	
+		return callGet(config.API_BASE_URL_TOURISM,"/ODHActivityPoi", {
 			pagesize: 12000,
 			activitytype: type,
-			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText",
+			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText,Source,SmgTags,Ratings.Difficulty,AdditionalPoiInfos",
 			active: true,
 			language: language,
+			source: source,
 			origin: config.ORIGIN
 		})
 		.then(response => {			
