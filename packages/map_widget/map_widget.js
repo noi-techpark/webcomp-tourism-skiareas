@@ -229,6 +229,8 @@ class MapWidget extends LitElement {
             activitysubtype = "iconFoerderband"; 
           else if(assignedlifttype == "zug")
             activitysubtype = "iconZug"; 
+          else if(assignedlifttype == "skibus")
+            activitysubtype = "iconBus"; 
           else
             activitysubtype = "iconSessellift";
 
