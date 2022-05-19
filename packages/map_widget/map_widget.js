@@ -100,13 +100,8 @@ class MapWidget extends LitElement {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var diffpiste = "20";
+                    var diffpiste = activity["Ratings.Difficulty"];
                     var pistecolor = 'grey';
-
-                    if(activity.Ratings && activity.Ratings.Difficulty)
-                    {
-                      diffpiste = activity.Ratings.Difficulty;
-                    }
 
                     if(diffpiste == "2"){
                       pistecolor = 'blue';
@@ -132,7 +127,7 @@ class MapWidget extends LitElement {
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
-                      url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCached/' + activity.GpsTrack[key].GpxTrackUrl;
+                      url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCustomCached/kml/' + activity.GpsTrack[key].GpxTrackUrl;
                       iskml = true;
                       isgpx = false;
                     }
@@ -168,7 +163,7 @@ class MapWidget extends LitElement {
 
                     if(iskml)
                     {
-                      console.log("kml parsing");
+                      //console.log("kml parsing " + pistecolor + " difficulty " + diffpiste);
 
                       fetch(url)
                       .then(res => res.text())
@@ -180,7 +175,7 @@ class MapWidget extends LitElement {
                             async: true,
                             color: pistecolor
                           }).on('loaded', function (e) {                            
-                        }).addTo(this.map).bindPopup(popupslope);  //.setStyle({color: pistecolor })
+                        }).setStyle({color: pistecolor }).addTo(this.map).bindPopup(popupslope);  //.setStyle({color: pistecolor })
                         
                           //this.map.addLayer(track);
       
@@ -206,11 +201,13 @@ class MapWidget extends LitElement {
           if(activity.SmgTags)
           {
             activity.SmgTags.forEach(element => {
-              if(element != "aufstiegsanlagen" && element != "anderes" && element != "weitere aufstiegsanlagen"){
+              if(element != "aufstiegsanlagen" && element != "anderes" && element != "weitere aufstiegsanlagen" && element != "activity"){
                 assignedlifttype = element;
               }
           });
           }
+
+          console.log(assignedlifttype);
 
           var activitysubtype = "";
 
@@ -253,7 +250,7 @@ class MapWidget extends LitElement {
           if(activity.IsOpen == false)
           {
             opened = '<span style="background-color:red">Geschlossen</span>';                
-            markerlatlng.items.opened = "red";
+            markerlatlng.items.opened = "grey";
           }     
 
          if(activity.Source == 'lts')
@@ -400,13 +397,13 @@ class MapWidget extends LitElement {
 
                 if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                 {
-                  url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCached/' + activity.GpsTrack[key].GpxTrackUrl;
+                  url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCustomCached/kml/' + activity.GpsTrack[key].GpxTrackUrl;
                   iskml = true;
                 }
 
                 if(iskml)
                 {
-                  console.log("kml parsing lift");
+                  //console.log("kml parsing lift");
 
                   fetch(url)
                   .then(res => res.text())
@@ -418,7 +415,7 @@ class MapWidget extends LitElement {
                         async: true
                         //color: pistecolor
                       }).on('loaded', function (e) {                            
-                    }).setStyle({color: 'red' }).addTo(this.map).bindPopup(popup);  //.setStyle({color: pistecolor })
+                    }).setStyle({color: markerlatlng.items.opened }).addTo(this.map).bindPopup(popup);  //.setStyle({color: pistecolor })
                     
                       //this.map.addLayer(track);
   
