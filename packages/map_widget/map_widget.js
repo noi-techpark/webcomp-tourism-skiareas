@@ -33,6 +33,10 @@ class MapWidget extends LitElement {
       propCenterMap: {
         type: String,
         attribute: 'centermap'
+      },
+      propCheckGps: {
+        type: Boolean,
+        attribute: 'checkgpspoints'
       }
     };
   }
@@ -90,7 +94,7 @@ class MapWidget extends LitElement {
 
     let columns_layer_array = [];
     
-      await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource);
+      await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource, this.propCheckGps);
 
       this.nodes.map(activity => {
 
@@ -207,7 +211,7 @@ class MapWidget extends LitElement {
           });
           }
 
-          console.log(assignedlifttype);
+          //console.log(assignedlifttype);
 
           var activitysubtype = "";
 
@@ -295,8 +299,11 @@ class MapWidget extends LitElement {
             }).bindPopup(popup);
 
             //Check if GPS Point is outside South Tyrol
-            var distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
-            console.log(distancecheck);
+            if(propCheckGps == true)
+            {
+              var distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
+              console.log(distancecheck);
+            }
 
             columns_layer_array.push(marker);            
             markerlatlng.items.elements.push(marker.getLatLng());

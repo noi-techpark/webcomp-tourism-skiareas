@@ -95,6 +95,15 @@
         "options": {
           "default": ""
         }
+      },
+      {
+        "key": "checkgpspoints",
+        "type": "boolean",
+        "label": "Remove gps points outside 200 km of the centre of south tyrol",
+        "required": false,
+        "options": {
+          "default": "true"
+        }
       }
     ]
   }
