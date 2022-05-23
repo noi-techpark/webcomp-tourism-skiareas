@@ -219,7 +219,7 @@ class MapWidget extends LitElement {
             activitysubtype = "iconSeilbahn";
           else if(assignedlifttype == "standseilbahn/zahnradbahn" || assignedlifttype == "schrägaufzug" || assignedlifttype == "unterirdische bahn")
             activitysubtype = "iconZahnrad";
-          else if(assignedlifttype == "skilift")
+          else if(assignedlifttype == "skilift" || assignedlifttype == "kleinskilift")
             activitysubtype = "iconSkilift";
           else if(assignedlifttype == "umlaufbahn")
             activitysubtype = "iconUmlaufbahn";
@@ -339,8 +339,6 @@ class MapWidget extends LitElement {
 
           });
           if(markerlatlng.itemcount > 1){
-
-
 
             for (var i = 1; i < markerlatlng.itemcount; i++) {
 
