@@ -94,7 +94,7 @@ class MapWidget extends LitElement {
 
     let columns_layer_array = [];
     
-      await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource, this.propCheckGps);
+      await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource);
 
       this.nodes.map(activity => {
 
@@ -298,15 +298,21 @@ class MapWidget extends LitElement {
               icon: icon,
             }).bindPopup(popup);
 
+          var distancecheck = 0;
+
             //Check if GPS Point is outside South Tyrol
-            if(propCheckGps == true)
+            if(this.propCheckGps == true)
             {
-              var distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
-              console.log(distancecheck);
+              distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
+              //console.log(distancecheck);
             }
 
-            columns_layer_array.push(marker);            
-            markerlatlng.items.elements.push(marker.getLatLng());
+
+            //Add only if distance is less than 200 km
+            if(distancecheck < 200){
+              columns_layer_array.push(marker);            
+              markerlatlng.items.elements.push(marker.getLatLng());
+            }            
 
             //Gps Track on Map
             if(activity.GpsTrack && activity.GpsTrack.length > 0)
