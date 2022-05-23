@@ -4,7 +4,7 @@ import leaflet_mrkcls from 'leaflet.markercluster';
 import style__leaflet from 'leaflet/dist/leaflet.css';
 import style__markercluster from 'leaflet.markercluster/dist/MarkerCluster.css';
 import style from './scss/main.scss';
-import { getStyle, rainbow } from './utils.js';
+import { getStyle, rainbow, getDistanceFromLatLonInKm } from './utils.js';
 import { fetchActivities,fetchSkiAreas } from './api/api.js';
 import moment from 'moment';
 import L2 from 'leaflet-gpx';
@@ -294,8 +294,11 @@ class MapWidget extends LitElement {
               icon: icon,
             }).bindPopup(popup);
 
-            columns_layer_array.push(marker);
+            //Check if GPS Point is outside South Tyrol
+            var distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
+            console.log(distancecheck);
 
+            columns_layer_array.push(marker);            
             markerlatlng.items.elements.push(marker.getLatLng());
 
             //Gps Track on Map
@@ -323,6 +326,8 @@ class MapWidget extends LitElement {
 
           });
           if(markerlatlng.itemcount > 1){
+
+
 
             for (var i = 1; i < markerlatlng.itemcount; i++) {
 
