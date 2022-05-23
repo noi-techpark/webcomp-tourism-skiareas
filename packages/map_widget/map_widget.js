@@ -4,7 +4,7 @@ import leaflet_mrkcls from 'leaflet.markercluster';
 import style__leaflet from 'leaflet/dist/leaflet.css';
 import style__markercluster from 'leaflet.markercluster/dist/MarkerCluster.css';
 import style from './scss/main.scss';
-import { getStyle, rainbow } from './utils.js';
+import { getStyle, rainbow, getDistanceFromLatLonInKm } from './utils.js';
 import { fetchActivities,fetchSkiAreas } from './api/api.js';
 import moment from 'moment';
 import L2 from 'leaflet-gpx';
@@ -33,6 +33,10 @@ class MapWidget extends LitElement {
       propCenterMap: {
         type: String,
         attribute: 'centermap'
+      },
+      propCheckGps: {
+        type: Boolean,
+        attribute: 'checkgpspoints'
       }
     };
   }
@@ -207,7 +211,7 @@ class MapWidget extends LitElement {
           });
           }
 
-          console.log(assignedlifttype);
+          //console.log(assignedlifttype);
 
           var activitysubtype = "";
 
@@ -215,7 +219,7 @@ class MapWidget extends LitElement {
             activitysubtype = "iconSeilbahn";
           else if(assignedlifttype == "standseilbahn/zahnradbahn" || assignedlifttype == "schrägaufzug" || assignedlifttype == "unterirdische bahn")
             activitysubtype = "iconZahnrad";
-          else if(assignedlifttype == "skilift")
+          else if(assignedlifttype == "skilift" || assignedlifttype == "kleinskilift")
             activitysubtype = "iconSkilift";
           else if(assignedlifttype == "umlaufbahn")
             activitysubtype = "iconUmlaufbahn";
@@ -294,9 +298,21 @@ class MapWidget extends LitElement {
               icon: icon,
             }).bindPopup(popup);
 
-            columns_layer_array.push(marker);
+          var distancecheck = 0;
 
-            markerlatlng.items.elements.push(marker.getLatLng());
+            //Check if GPS Point is outside South Tyrol
+            if(this.propCheckGps == true)
+            {
+              distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
+              //console.log(distancecheck);
+            }
+
+
+            //Add only if distance is less than 200 km
+            if(distancecheck < 200){
+              columns_layer_array.push(marker);            
+              markerlatlng.items.elements.push(marker.getLatLng());
+            }            
 
             //Gps Track on Map
             if(activity.GpsTrack && activity.GpsTrack.length > 0)
