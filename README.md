@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Generic Map to show Open Data Hub Skiarea Information
 
 [![REUSE status](https://api.reuse.software/badge/github.com/noi-techpark/webcomp-tourism-skiareas)](https://api.reuse.software/info/github.com/noi-techpark/webcomp-tourism-skiareas)
