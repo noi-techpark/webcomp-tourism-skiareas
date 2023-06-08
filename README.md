@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC0-1.0
 
 # Generic Map to show Open Data Hub Skiarea Information
 
-![REUSE Compliance](https://github.com/noi-techpark/REPONAME/actions/workflows/reuse.yml/badge.svg)
+![REUSE Compliance](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/reuse.yml/badge.svg)
 [![REUSE status](https://api.reuse.software/badge/github.com/noi-techpark/webcomp-tourism-skiareas)](https://api.reuse.software/info/github.com/noi-techpark/webcomp-tourism-skiareas)
 [![CI/CD](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml/badge.svg)](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml)
 
