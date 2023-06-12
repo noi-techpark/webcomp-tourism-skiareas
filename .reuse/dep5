@@ -7,7 +7,7 @@ Files: dist/fonts/iconfont.* work/scripts/fonts/iconfont.* packages/map_widget/s
 Copyright: (c) 2019 ReturnValues, Inc. http://iconfont.io
 License: MIT
 
-Files: .github/* infrastructure/* .gitignore LICENSE.md .editorconfig *.png *.json
+Files: .github/* infrastructure/* .gitignore .pre-commit-config.yaml LICENSE.md .editorconfig *.png *.json
 Copyright: (c) NOI Techpark <digital@noi.bz.it>
 License: CC0-1.0
 
