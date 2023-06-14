@@ -12,7 +12,7 @@ SPDX-License-Identifier: CC0-1.0
 
 This project is a rewrite taken from the repository webcomp-generic-map (thanks
 to pmoser). It is a webcomponent to display data from the [Open Data
-Hub](https://opendatahub.bz.it).
+Hub](https://opendatahub.com).
 
 The Open Data Hub Team wants to generate reusable and independent visualization
 components to display data from the Open Data Hub easily. Using these
@@ -22,7 +22,7 @@ components into any website.
 Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint
 
 Do you want to see it in action? Go to our [web component
-store](https://webcomponents.opendatahub.bz.it/webcomponent/8282479b-dc13-5012-939f-7a0196348dca)!
+store](https://webcomponents.opendatahub.com/webcomponent/8282479b-dc13-5012-939f-7a0196348dca)!
 
 - [Generic Map to show Open Data Hub Skiarea Information](#generic-map-to-show-open-data-hub-skiarea-information)
   - [Usage](#usage)
@@ -61,7 +61,7 @@ Include the Javascript file `dist/map_widget.min.js` in your HTML and define the
 #### types
 
 Type: bitmask
-Options: Refer to https://tourism.opendatahub.bz.it/api/ActivityTypes
+Options: Refer to https://tourism.opendatahub.com/api/ActivityTypes
 
 #### language
 
@@ -178,7 +178,7 @@ docker-compose run --rm app /bin/bash -c "npm run build"
 
 ### Support
 
-For support, please contact [help@opendatahub.bz.it](mailto:help@opendatahub.bz.it).
+For support, please contact [help@opendatahub.com](mailto:help@opendatahub.com).
 
 ### Contributing
 
