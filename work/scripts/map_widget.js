@@ -45796,7 +45796,7 @@ async function fetchSkiAreas(language) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ({
 	API_BASE_URL_MOBILITY: 'https://tomcatsec.testingmachine.eu/ninja/api/v2',
-	API_BASE_URL_TOURISM: 'https://tourism.opendatahub.bz.it/v1',
+	API_BASE_URL_TOURISM: 'https://tourism.opendatahub.com/v1',
 	ORIGIN: 'webcomp-tourism-skiareas'
 });
 
@@ -45960,7 +45960,7 @@ class MapWidget extends lit_element__WEBPACK_IMPORTED_MODULE_0__["LitElement"] {
                     var iskml = false;
                     var isgpx = true;
 
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
@@ -46153,7 +46153,7 @@ class MapWidget extends lit_element__WEBPACK_IMPORTED_MODULE_0__["LitElement"] {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/api/Activity/Gpx/');;
 
                     let gpx = new leaflet_gpx__WEBPACK_IMPORTED_MODULE_9___default.a.GPX(url, {
                           async: true,

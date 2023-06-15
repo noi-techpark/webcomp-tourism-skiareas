@@ -131,7 +131,7 @@ class MapWidget extends LitElement {
                     var iskml = false;
                     var isgpx = true;
 
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
@@ -324,7 +324,7 @@ class MapWidget extends LitElement {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/api/Activity/Gpx/');;
 
                     let gpx = new L2.GPX(url, {
                           async: true,
