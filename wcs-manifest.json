@@ -4,6 +4,7 @@
   "descriptionAbstract": "Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint",
   "license": "AGPL-3.0-or-later",
   "repositoryUrl": "https://github.com/noi-techpark/webcomp-tourism-skiareas.git",
+  "shortName": "skiareas-and-lifts-map",
   "copyrightHolders": [
     {
       "name": "NOI",
@@ -50,9 +51,7 @@
             "512",
             "768"
           ],
-          "default": [
-            "768"
-          ]
+          "default": "768"
         }
       },
       {
@@ -66,9 +65,7 @@
             "it",
             "en"
           ],
-          "default": [
-            "en"
-          ]
+          "default": "en"
         }
       },
       {
@@ -82,9 +79,7 @@
             "dss",
             "lts,dss"
           ],
-          "default": [
-            "lts,dss"
-          ]
+          "default": "lts,dss"
         }
       },
       {
@@ -98,10 +93,10 @@
       },
       {
         "key": "checkgpspoints",
-        "type": "bool",        
+        "type": "bool",
+        "label": "Removes gps points outside 200 km of the center of south tyrol",
         "required": false,
         "options": {
-          "label": "Removes gps points outside 200 km of the center of south tyrol",
           "default": true
         }
       }      

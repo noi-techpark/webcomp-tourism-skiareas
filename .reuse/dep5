@@ -1,16 +1,16 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: webcomp-tourism-skiareas
-Upstream-Contact: Rudolf Thoeni <r.thoeni@noi.bz.it>
+Upstream-Contact: NOI Techpark <digital@noi.bz.it>
 Source: https://github.com/noi-techpark/webcomp-tourism-skiareas
 
-Files: packages/* work/* dist/*.js odh-*.js
-Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
-License: AGPL-3.0-or-later
-
-Files: *.md *.txt .env.* package-lock.json infrastructure/* .github/workflows/* .editorconfig .gitignore docker-compose.yml package.json wcs-manifest.json yarn.lock webpack.* *-logo.png lerna.json
-Copyright: (c) 2021 NOI Techpark <info@noi.bz.it>
-License: CC0-1.0
-
-Files: dist/fonts/iconfont.*
+Files: dist/fonts/iconfont.* work/scripts/fonts/iconfont.* packages/map_widget/scss/iconfont.*
 Copyright: (c) 2019 ReturnValues, Inc. http://iconfont.io
 License: MIT
+
+Files: .github/* infrastructure/* .gitignore .pre-commit-config.yaml LICENSE.md .editorconfig *.png *.json
+Copyright: (c) NOI Techpark <digital@noi.bz.it>
+License: CC0-1.0
+
+Files: dist/map_widget.min.js work/scripts/map_widget.js
+Copyright: (c) NOI Techpark <digital@noi.bz.it>
+License: AGPL-3.0-or-later

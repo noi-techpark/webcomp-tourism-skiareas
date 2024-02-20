@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 import { html, LitElement } from 'lit-element';
 import L from 'leaflet';
 import leaflet_mrkcls from 'leaflet.markercluster';
@@ -48,11 +52,11 @@ class MapWidget extends LitElement {
     this.map_center = [46.479, 11.331];
     this.map_zoom = 9;
     this.map_layer = "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png";
-    this.map_attribution = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>';
+    this.map_attribution = '<a target="_blank" href="https://opendatahub.com">OpenDataHub.com</a> | &copy; <a target="_blank" href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a target="_blank" href="https://carto.com/attribution">CARTO</a>';
 
     //OSM
     // this.map_layer = "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    // this.map_attribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';        
+    // this.map_attribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
 
     //OA MAP needs OA JS
 
@@ -63,7 +67,7 @@ class MapWidget extends LitElement {
 
     /* Data fetched from Open Data Hub */
     this.nodes = [];
-    this.types = {};    
+    this.types = {};
 
     /* Requests */
     //this.fetchStations = fetchStations.bind(this);
@@ -78,7 +82,7 @@ class MapWidget extends LitElement {
     if(this.propCenterMap){
       var splittedgps = this.propCenterMap.split(',');
       this.map_center =  [parseFloat(splittedgps[0]),parseFloat(splittedgps[1])]
-      this.map_zoom = parseInt(splittedgps[2]);      
+      this.map_zoom = parseInt(splittedgps[2]);
     }
 
     this.map = L.map(mapref, {
@@ -93,14 +97,14 @@ class MapWidget extends LitElement {
   async drawMap() {
 
     let columns_layer_array = [];
-    
+
       await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource);
 
       this.nodes.map(activity => {
 
         if(activity.SubType == "Skirundtouren Pisten" && activity.GpsTrack && activity.GpsTrack.length > 0)
         {
-         
+
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
@@ -115,19 +119,19 @@ class MapWidget extends LitElement {
                     }
                     if(diffpiste == "6"){
                       pistecolor = 'black';
-                    }        
-                    
+                    }
+
                     var slopeopened = '<span style="background-color:green">Geöffnet</span>';
                     if(activity.IsOpen == false)
                     {
-                      slopeopened = '<span style="background-color:red">Geschlossen</span>';                
+                      slopeopened = '<span style="background-color:red">Geschlossen</span>';
                       //markerlatlng.items.opened = "red";
-                    }  
-                    
+                    }
+
                     var iskml = false;
                     var isgpx = true;
 
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/v1/Activity/Gpx/');
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
 
                     if(activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
                     {
@@ -137,16 +141,16 @@ class MapWidget extends LitElement {
                     }
 
                     let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
-                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';                    
-                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';           
-                    popupSlope += '<div>' + slopeopened + '</div>';            
-        
+                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
+                    popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
+                    popupSlope += '<div>' + slopeopened + '</div>';
+
                     if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
-                    {              
-                      popupSlope += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
+                    {
+                      popupSlope += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
                     }
                     popupSlope += '</div>';
-        
+
                     let popupslope = L.popup().setContent(popupSlope);
 
                     if(isgpx){
@@ -175,18 +179,18 @@ class MapWidget extends LitElement {
                           // Create new kml overlay
                           const parser = new DOMParser();
                           const kml = parser.parseFromString(kmltext, 'text/xml');
-                          const track = new L.KML(kml, { 
+                          const track = new L.KML(kml, {
                             async: true,
                             color: pistecolor
-                          }).on('loaded', function (e) {                            
+                          }).on('loaded', function (e) {
                         }).setStyle({color: pistecolor }).addTo(this.map).bindPopup(popupslope);  //.setStyle({color: pistecolor })
-                        
+
                           //this.map.addLayer(track);
-      
+
                           // Adjust map to show the kml
                           //const bounds = track.getBounds();
                           //map.fitBounds(bounds);
-                      }); //.addTo(this.map); //.bindPopup(popupslope);                 
+                      }); //.addTo(this.map); //.bindPopup(popupslope);
                     }
 
 
@@ -194,7 +198,7 @@ class MapWidget extends LitElement {
                       //this.map.addLayer(gpx).bindPopup(popupslope);
                 }
               });
-      
+
         }
         else if(((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && activity.SubType == "Aufstiegsanlagen")
         {
@@ -230,11 +234,11 @@ class MapWidget extends LitElement {
           else if(assignedlifttype == "telemix")
             activitysubtype = "iconTelemix";
           else if(assignedlifttype == "förderband")
-            activitysubtype = "iconFoerderband"; 
+            activitysubtype = "iconFoerderband";
           else if(assignedlifttype == "zug")
-            activitysubtype = "iconZug"; 
+            activitysubtype = "iconZug";
           else if(assignedlifttype == "skibus")
-            activitysubtype = "iconBus"; 
+            activitysubtype = "iconBus";
           else
             activitysubtype = "iconSessellift";
 
@@ -255,13 +259,13 @@ class MapWidget extends LitElement {
           var opened = '<span style="background-color:green">Geöffnet</span>';
           if(activity.IsOpen == false)
           {
-            opened = '<span style="background-color:red">Geschlossen</span>';                
+            opened = '<span style="background-color:red">Geschlossen</span>';
             markerlatlng.items.opened = "grey";
-          }     
+          }
 
          if(activity.Source == 'lts')
          {
-         
+
 
           //Sort activityGpsInfo by Talstation, Mittelstation, Bergstation
           var gpsinfosorted = [];
@@ -271,7 +275,7 @@ class MapWidget extends LitElement {
           if(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"))
               gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"));
           if(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"))
-              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));                   
+              gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));
 
           Object.keys(gpsinfosorted).forEach(key => {
 
@@ -283,12 +287,12 @@ class MapWidget extends LitElement {
             let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + gpsinfosorted[key].Gpstype + '</i>';
             popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
             popupCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
-            popupCont += '<div>' + assignedlifttype + '</div>';           
-            popupCont += '<div>' + opened + '</div>';            
+            popupCont += '<div>' + assignedlifttype + '</div>';
+            popupCont += '<div>' + opened + '</div>';
 
             if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
-            {              
-              popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
+            {
+              popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
             }
             popupCont += '</div>';
 
@@ -310,17 +314,17 @@ class MapWidget extends LitElement {
 
             //Add only if distance is less than 200 km
             if(distancecheck < 200){
-              columns_layer_array.push(marker);            
+              columns_layer_array.push(marker);
               markerlatlng.items.elements.push(marker.getLatLng());
-            }            
+            }
 
             //Gps Track on Map
             if(activity.GpsTrack && activity.GpsTrack.length > 0)
-            {                  
+            {
               Object.keys(activity.GpsTrack).forEach(key => {
                 if(activity.GpsTrack[key].Type == "detailed")
                 {
-                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.bz.it/api/Activity/Gpx/');;
+                    var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/api/Activity/Gpx/');;
 
                     let gpx = new L2.GPX(url, {
                           async: true,
@@ -346,14 +350,14 @@ class MapWidget extends LitElement {
               //popupLineCont += '<table>';
               //popupLineCont += '<tr>';
               popupLineCont += '<div>' + activity.SubType + '</div><br />';
-              //popupLineCont += '</tr>';            
+              //popupLineCont += '</tr>';
               //popupLineCont += '<tr>';
               popupLineCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
               popupLineCont += '<div>' + assignedlifttype + '</div><br />';
               //popupLineCont += '</tr>';
               //popupLineCont += '<tr>';
               popupLineCont += '<div>' + opened + '</div>';
-              //popupLineCont += '</tr>';              
+              //popupLineCont += '</tr>';
               popupLineCont += '</div>';
 
               let popupline = L.popup().setContent(popupLineCont);
@@ -365,7 +369,7 @@ class MapWidget extends LitElement {
                 smoothFactor: 1,
                 weight: 6
               }).addTo(this.map).bindPopup(popupline);
-              
+
               // polyline.on('mouseover', function (e) {
               //   this.setStyle({
               //     weight: 10
@@ -375,15 +379,15 @@ class MapWidget extends LitElement {
               // polyline.on('mouseout', function (e) {
               //   this.setStyle({
               //     weight: 6
-              //   });  
+              //   });
               //   this.closePopup();
               // });
-            }            
+            }
           }
-        }         
+        }
         else if(activity.Source == 'dss')
-        {          
-          
+        {
+
           Object.keys(activity.GpsTrack).forEach(key => {
             if(activity.GpsTrack[key].Type == "detailed")
             {
@@ -391,25 +395,25 @@ class MapWidget extends LitElement {
               let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
               popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
               popupCont += '<div>' + '<span class="icon ' + activitysubtype +'"></span>' + '</div>';
-              popupCont += '<div>' + assignedlifttype + '</div>';           
-              popupCont += '<div>' + opened + '</div>';            
-  
+              popupCont += '<div>' + assignedlifttype + '</div>';
+              popupCont += '<div>' + opened + '</div>';
+
               if(activity["Detail." + this.propLanguage + ".BaseText"] != null)
-              {              
-                popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';             
+              {
+                popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
               }
               popupCont += '</div>';
-  
+
               let popup = L.popup().setContent(popupCont);
-  
+
               // let marker = L.marker(pos, {
               //   icon: icon,
               // }).bindPopup(popup);
-  
+
               // columns_layer_array.push(marker);
-  
+
               //markerlatlng.items.elements.push(marker.getLatLng());
- 
+
               var iskml = false;
               var url = '';
 
@@ -429,18 +433,18 @@ class MapWidget extends LitElement {
                       // Create new kml overlay
                       const parser = new DOMParser();
                       const kml = parser.parseFromString(kmltext, 'text/xml');
-                      const track = new L.KML(kml, { 
+                      const track = new L.KML(kml, {
                         async: true
                         //color: pistecolor
-                      }).on('loaded', function (e) {                            
+                      }).on('loaded', function (e) {
                     }).setStyle({color: markerlatlng.items.opened }).addTo(this.map).bindPopup(popup);  //.setStyle({color: pistecolor })
-                    
+
                       //this.map.addLayer(track);
-  
+
                       // Adjust map to show the kml
                       //const bounds = track.getBounds();
                       //map.fitBounds(bounds);
-                  }); //.addTo(this.map); //.bindPopup(popupslope);                 
+                  }); //.addTo(this.map); //.bindPopup(popupslope);
                 }
 
 
@@ -449,8 +453,8 @@ class MapWidget extends LitElement {
             }
           });
 
-        }         
-       }        
+        }
+       }
       });
       //Getting Skiareas
       await this.fetchSkiAreas(this.propLanguage);
@@ -463,7 +467,7 @@ class MapWidget extends LitElement {
         ];
 
         // let iconskiarea = L.divIcon({
-        //   html: '<div class="marker"><div style="background-color: red"></div></div>',          
+        //   html: '<div class="marker"><div style="background-color: red"></div></div>',
         //   iconSize: L.point(17, 17)
         // });
 
@@ -475,13 +479,13 @@ class MapWidget extends LitElement {
           opacity:0.8
         });
 
-        let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';        
+        let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';
         if(skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
         {
-           //Opening           
+           //Opening
            popupContSkiArea += '<div>' + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " - " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
-           //BaseText          
-          popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';              
+           //BaseText
+          popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';
         }
         popupContSkiArea += '</div>';
 
@@ -492,7 +496,7 @@ class MapWidget extends LitElement {
         }).addTo(this.map).bindPopup(popupskiarea);
 
       });
-    
+
 
     this.visibleNodes = columns_layer_array.length;
     let columns_layer = L.layerGroup(columns_layer_array, {});

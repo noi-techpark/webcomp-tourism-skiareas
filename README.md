@@ -1,11 +1,18 @@
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Generic Map to show Open Data Hub Skiarea Information
 
+[![REUSE Compliance](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/reuse.yml/badge.svg)](https://github.com/noi-techpark/odh-docs/wiki/REUSE#badges)
 [![REUSE status](https://api.reuse.software/badge/github.com/noi-techpark/webcomp-tourism-skiareas)](https://api.reuse.software/info/github.com/noi-techpark/webcomp-tourism-skiareas)
 [![CI/CD](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml/badge.svg)](https://github.com/noi-techpark/webcomp-tourism-skiareas/actions/workflows/main.yml)
 
 This project is a rewrite taken from the repository webcomp-generic-map (thanks
 to pmoser). It is a webcomponent to display data from the [Open Data
-Hub](https://opendatahub.bz.it).
+Hub](https://opendatahub.com).
 
 The Open Data Hub Team wants to generate reusable and independent visualization
 components to display data from the Open Data Hub easily. Using these
@@ -15,7 +22,7 @@ components into any website.
 Map that displays Lifts and Skiareas from Opendatahub Activity Endpoint
 
 Do you want to see it in action? Go to our [web component
-store](https://webcomponents.opendatahub.bz.it/webcomponent/8282479b-dc13-5012-939f-7a0196348dca)!
+store](https://webcomponents.opendatahub.com/webcomponent/8282479b-dc13-5012-939f-7a0196348dca)!
 
 - [Generic Map to show Open Data Hub Skiarea Information](#generic-map-to-show-open-data-hub-skiarea-information)
   - [Usage](#usage)
@@ -54,7 +61,7 @@ Include the Javascript file `dist/map_widget.min.js` in your HTML and define the
 #### types
 
 Type: bitmask
-Options: Refer to https://tourism.opendatahub.bz.it/api/ActivityTypes
+Options: Refer to https://tourism.opendatahub.com/api/ActivityTypes
 
 #### language
 
@@ -171,7 +178,7 @@ docker-compose run --rm app /bin/bash -c "npm run build"
 
 ### Support
 
-For support, please contact [help@opendatahub.bz.it](mailto:help@opendatahub.bz.it).
+For support, please contact [help@opendatahub.com](mailto:help@opendatahub.com).
 
 ### Contributing
 
@@ -188,3 +195,18 @@ The project uses this boilerplate: [https://github.com/noi-techpark/webcomp-boil
 ### License
 
 The code in this project is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3 license. See the [LICENSE.md](LICENSE.md) file for more information.
+
+### REUSE
+
+This project is [REUSE](https://reuse.software) compliant, more information about the usage of REUSE in NOI Techpark repositories can be found [here](https://github.com/noi-techpark/odh-docs/wiki/Guidelines-for-developers-and-licenses#guidelines-for-contributors-and-new-developers).
+
+Since the CI for this project checks for REUSE compliance you might find it useful to use a pre-commit hook checking for REUSE compliance locally. The [pre-commit-config](.pre-commit-config.yaml) file in the repository root is already configured to check for REUSE compliance with help of the [pre-commit](https://pre-commit.com) tool.
+
+Install the tool by running:
+```bash
+pip install pre-commit
+```
+Then install the pre-commit hook via the config file by running:
+```bash
+pre-commit install
+```
