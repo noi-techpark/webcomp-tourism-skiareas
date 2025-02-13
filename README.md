@@ -85,6 +85,7 @@ on your local machine for development and testing purposes.
 To build the project, the following prerequisites must be met:
 
 - Node 12 / NPM 8.1.2
+- Node 14 / NPM 6.14.18
 
 For a ready to use Docker environment with all prerequisites already installed and prepared, you can check out the [Docker environment](#docker-environment) section.
 
@@ -109,6 +110,10 @@ Download all dependencies:
 ```bash
 npm install
 ```
+
+### Environment
+
+Copy .env.example to .env and set all needed Environment Variables.
 
 ### Build
 

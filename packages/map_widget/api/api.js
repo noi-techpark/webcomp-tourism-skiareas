@@ -25,24 +25,6 @@ export function callGet(domain, path, params) {
 		});
 }
 
-export async function fetchStations(type) {
-	console.log(type)
-	return callGet(config.API_BASE_URL_MOBILITY, "/flat/" + (type || '*'), {
-			limit: -1,
-			select: "scode,stype,sname,sorigin,scoordinate,smetadata,pcode",
-			where: "scoordinate.neq.null,sactive.eq.true",
-			distinct: true,
-			origin: config.ORIGIN
-		})
-		.then(response => {
-			this.nodes = response.data;
-		})
-		.catch(e => {
-			console.log(e)
-			throw e;
-		});
-	}
-
 export async function fetchActivities(type, language, source) {	
 		return callGet(config.API_BASE_URL_TOURISM,"/ODHActivityPoi", {
 			pagesize: 12000,
