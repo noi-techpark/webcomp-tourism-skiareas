@@ -15,8 +15,12 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(s*)css$/,
+        test: /\.scss$/,
         use: [{ loader: 'css-loader' }, { loader: 'sass-loader' }]
+      },
+      {
+        test: /\.css$/,
+        use: [{ loader: 'css-loader' }]
       },
       {
         test: /\.(png|jpg|gif|ttf)$/i,
@@ -30,23 +34,22 @@ module.exports = {
         ]
       },
       {
-        test: /\.svg$/,
-        loader: 'svg-inline-loader'
-      },
-      {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        test: /\.(woff|woff2|eot)$/i,
         use: [
           {
-            loader: 'file-loader',
+            loader: 'url-loader',
             options: {
-              name: '[name].[ext]',
-              outputPath: 'fonts/'
+              limit: 10000
             }
           }
         ]
+      },
+      {
+        test: /\.svg$/,
+        loader: 'svg-inline-loader'
       }
     ]
-  }, 
+  },
   devtool: 'inline-source-map',
   plugins: [
     new Dotenv()
