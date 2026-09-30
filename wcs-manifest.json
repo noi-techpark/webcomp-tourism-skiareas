@@ -43,14 +43,13 @@
       {
         "key": "types",
         "type": "multiselect",
-        "label": "Show slopes and/or lifts",
+        "label": "Show slopes and/or lifts, if none is selected both are shown",
         "required": false,
         "options": {
           "values": [
             "slopes",
             "lifts"
-          ],
-          "default": "slopes,lifts"
+          ]
         }
       },
       {
