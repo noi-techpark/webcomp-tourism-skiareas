@@ -4,14 +4,15 @@
 
 import { html, LitElement } from 'lit-element';
 import L from 'leaflet';
-import leaflet_mrkcls from 'leaflet.markercluster';
 import style__leaflet from 'leaflet/dist/leaflet.css';
 import '@maplibre/maplibre-gl-leaflet';
 import style__maplibre from 'maplibre-gl/dist/maplibre-gl.css';
-import style__markercluster from 'leaflet.markercluster/dist/MarkerCluster.css';
 import style from './scss/main.scss';
 import { getStyle, rainbow, getDistanceFromLatLonInKm } from './utils.js';
 import { fetchActivities, fetchSkiAreas } from './api/api.js';
+import colors, { slopeColor, cssVariables } from './colors.js';
+import { t } from './i18n.js';
+import config from './api/config.js';
 import moment from 'moment';
 import L2 from 'leaflet-gpx';
 import L3 from 'leaflet-kml';
@@ -37,6 +38,10 @@ class MapWidget extends LitElement
       propSource: {
         type: String,
         attribute: 'source'
+      },
+      propSkiAreaSource: {
+        type: String,
+        attribute: 'skiareasource'
       },
       propCenterMap: {
         type: String,
@@ -70,6 +75,14 @@ class MapWidget extends LitElement
     // this.language_default = 'en';
     // this.language = 'de';
 
+    /* KML download queue, firing ~1000 requests at once makes most of them fail */
+    this.fetchQueue = [];
+    this.fetchActive = 0;
+    this.fetchMaxParallel = 6;
+
+    /* Lift station and slope point markers are shown from this zoom level on, below it the lift lines alone are drawn */
+    this.stationMinZoom = 13;
+
     /* Data fetched from Open Data Hub */
     this.nodes = [];
     this.types = {};
@@ -102,6 +115,249 @@ class MapWidget extends LitElement
       style: this.map_layer,
       attribution: this.map_attribution
     }).addTo(this.map);
+
+    // Draw lifts above slopes
+    this.map.createPane('lifts');
+    this.map.getPane('lifts').style.zIndex = 450;
+  }
+
+  hasTag(activity, tagId)
+  {
+    return Array.isArray(activity.TagIds) && activity.TagIds.includes(tagId);
+  }
+
+  getCategories(activity)
+  {
+    let info = activity.AdditionalPoiInfos && activity.AdditionalPoiInfos[this.propLanguage];
+    return info && Array.isArray(info.Categories) ? info.Categories.join(', ') : '';
+  }
+
+  /**
+   * Returns true if a GpsInfo point is a known placeholder coordinate.
+   *
+   * Some lifts in the source data (LTS and DSS) have a station point that was
+   * never geocoded and instead carries a default coordinate. Connecting such a
+   * point with the real station produces straight lines of 8 up to 270 km on the map.
+   *
+   * Known placeholders (rounded to 4 decimals, ~10 m):
+   *  - 46.5742, 11.6739  St. Ulrich / Ortisei village centre
+   *                      (also stored as 46.57416, 11.67389)
+   *                      e.g. Pobist, Raut, Waldheim, Erschbaum, Hawaii, Gaisjoch, Sonne,
+   *                      Absam-Maierl, Campo Scuola Gardoné, Pralongiá II, Risaccia 1, Città dei Sassi
+   *  - 47.3688, 8.5375   Zurich city centre
+   *                      e.g. Maria, Val Setus
+   *
+   * Points matching a placeholder are skipped, so the lift shows only its valid station(s).
+   * Remove entries here once the source data has been corrected.
+   */
+  isPlaceholderGps(gps)
+  {
+    const placeholders = [
+      [46.5742, 11.6739], // St. Ulrich / Ortisei centre
+      [47.3688, 8.5375]   // Zurich centre
+    ];
+    const tolerance = 0.0001;
+
+    return placeholders.some(p => Math.abs(gps.Latitude - p[0]) < tolerance && Math.abs(gps.Longitude - p[1]) < tolerance);
+  }
+
+  // KML tracks are loaded directly or through the Open Data Hub proxy, see USE_KML_PROXY in api/config.js
+  kmlUrl(url)
+  {
+    return config.USE_KML_PROXY ? config.KML_PROXY + url : url;
+  }
+
+  /**
+   * Loads a track (KML or GPX) and draws it with the given style.
+   * onloaded is called once the track is on the map.
+   */
+  loadTrack(track, style, popupcontent, onloaded)
+  {
+    if (track.Format == "kml")
+    {
+      let url = this.kmlUrl(track.GpxTrackUrl);
+
+      this.fetchText(url)
+        .then(kmltext =>
+        {
+          const kml = new DOMParser().parseFromString(kmltext, 'text/xml');
+
+          // A blocked request returns an html error page instead of a kml
+          if (kml.getElementsByTagName('Placemark').length == 0)
+          {
+            console.log('no kml track in response: ' + url);
+            return;
+          }
+
+          let layer = new L.KML(kml);
+          layer.eachLayer(l => { if (style.pane) l.options.pane = style.pane; });
+          layer.setStyle(style).addTo(this.map).bindPopup(popupcontent);
+
+          if (onloaded)
+            onloaded();
+        })
+        .catch(e => console.log('kml load failed: ' + url, e));
+    }
+    else
+    {
+      let url = track.GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
+
+      new L2.GPX(url, {
+        async: true,
+        gpx_options: { parseElements: 'track' },
+        polyline_options: style,
+        marker_options: { startIconUrl: null, endIconUrl: null }
+      }).on('loaded', () =>
+      {
+        if (onloaded)
+          onloaded();
+      }).addTo(this.map).bindPopup(popupcontent);
+    }
+  }
+
+  liftPopupContent(activity, lifttype, stationtype)
+  {
+    let content = '<div class="popup"><div class="popup__title">' + activity["Detail." + this.propLanguage + ".Title"] + '</div>';
+    if (stationtype)
+      content += '<div class="popup__meta">' + t(stationtype, this.language) + '</div>';
+    content += '<div class="popup__meta">' + this.getCategories(activity) + '</div>';
+    content += '<div class="popup__lifttype">' + '<span class="icon ' + lifttype.icon + '"></span>' + '<span>' + lifttype.label + '</span></div>';
+    content += '<div>' + this.statusBadge(activity.IsOpen) + '</div>';
+
+    if (stationtype && activity["Detail." + this.propLanguage + ".BaseText"] != null)
+    {
+      content += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
+    }
+    content += '</div>';
+
+    return content;
+  }
+
+  // Fetches a url as text, running at most fetchMaxParallel requests at the same time
+  fetchText(url)
+  {
+    return new Promise((resolve, reject) =>
+    {
+      this.fetchQueue.push({ url, resolve, reject });
+      this.nextFetch();
+    });
+  }
+
+  nextFetch()
+  {
+    while (this.fetchActive < this.fetchMaxParallel && this.fetchQueue.length > 0)
+    {
+      const job = this.fetchQueue.shift();
+      this.fetchActive++;
+
+      fetch(job.url)
+        .then(res => res.text())
+        .then(job.resolve, job.reject)
+        .finally(() =>
+        {
+          this.fetchActive--;
+          this.nextFetch();
+        });
+    }
+  }
+
+  slopePopupContent(activity)
+  {
+    let content = '<div class="popup"><div class="popup__title">' + activity["Detail." + this.propLanguage + ".Title"] + '</div>';
+    content += '<div class="popup__meta">' + this.getCategories(activity) + '</div>';
+    content += '<div>' + this.statusBadge(activity.IsOpen) + '</div>';
+
+    if (activity["Detail." + this.propLanguage + ".BaseText"] != null)
+    {
+      content += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
+    }
+    content += '</div>';
+
+    return content;
+  }
+
+  // With checkgpspoints set, points more than 200 km from the centre of South Tyrol are ignored
+  isInsideArea(gps)
+  {
+    if (this.propCheckGps != true)
+      return true;
+
+    return getDistanceFromLatLonInKm(46.655781, 11.4296877, gps.Latitude, gps.Longitude) < 200;
+  }
+
+  get language()
+  {
+    return this.propLanguage || 'en';
+  }
+
+  statusBadge(isOpen)
+  {
+    return isOpen == false
+      ? '<span class="badge badge--closed">' + t('closed', this.language) + '</span>'
+      : '<span class="badge badge--open">' + t('open', this.language) + '</span>';
+  }
+
+  /**
+   * Determines the lift type, returns { icon, label }.
+   * TagIds (ODH categories) are checked first. For lifts without a matching tag
+   * the known SmgTags values (LTS categories) are used as fallback, e.g. "gondelbahn"
+   * has no ODH category. Unknown types get a generic lift icon.
+   */
+  liftType(activity)
+  {
+    const tagIds = activity.TagIds || [];
+    const smgTags = activity.SmgTags || [];
+    const has = (list, ...values) => values.some(v => list.includes(v));
+
+    let type = 'unknown';
+    let seats = null;
+
+    const chairTag = tagIds.find(tag => /^chairlift \d+ person/.test(tag));
+    const chairSmg = smgTags.find(tag => /^\d+er sessellift/.test(tag));
+
+    if (chairTag || chairSmg || has(tagIds, 'chairlift') || has(smgTags, 'sessellift'))
+    {
+      type = 'chairlift';
+      seats = (chairTag || chairSmg || '').match(/\d+/);
+    }
+    else if (has(tagIds, 'ski lift') || has(smgTags, 'skilift', 'kleinskilift'))
+      type = 'skilift';
+    else if (has(tagIds, 'orbit') || has(smgTags, 'umlaufbahn', 'gondelbahn'))
+      type = 'gondola';
+    else if (has(tagIds, 'cabinet train') || has(smgTags, 'kabinenbahn'))
+      type = 'cabin';
+    else if (has(tagIds, 'funicular railwaycog railway') || has(smgTags, 'standseilbahn', 'standseilbahn zahnradbahn', 'standseilbahn/zahnradbahn', 'schrägaufzug', 'unterirdische seilbahn', 'unterirdische bahn'))
+      type = 'funicular';
+    else if (has(tagIds, 'ropeway') || has(smgTags, 'seilbahn'))
+      type = 'ropeway';
+    else if (has(tagIds, 'telemix') || has(smgTags, 'telemix'))
+      type = 'telemix';
+    else if (has(tagIds, 'moving carpet') || has(smgTags, 'förderband'))
+      type = 'carpet';
+    else if (has(tagIds, 'train') || has(smgTags, 'zug'))
+      type = 'train';
+    else if (has(tagIds, 'skibus') || has(smgTags, 'skibus'))
+      type = 'bus';
+
+    const icons = {
+      chairlift: 'iconSessellift',
+      skilift: 'iconSkilift',
+      gondola: 'iconUmlaufbahn',
+      cabin: 'iconKabinenbahn',
+      funicular: 'iconZahnrad',
+      ropeway: 'iconSeilbahn',
+      telemix: 'iconTelemix',
+      carpet: 'iconFoerderband',
+      train: 'iconZug',
+      bus: 'iconBus',
+      unknown: 'iconLift'
+    };
+
+    const label = seats
+      ? t('lift_chairlift_seats', this.language, { n: seats[0] })
+      : t('lift_' + type, this.language);
+
+    return { icon: icons[type], label: label };
   }
 
   async drawMap()
@@ -114,381 +370,161 @@ class MapWidget extends LitElement
     this.nodes.map(activity =>
     {
 
-      if (activity.SubType == "Skirundtouren Pisten" && activity.GpsTrack && activity.GpsTrack.length > 0)
+      if (this.hasTag(activity, "slopes"))
       {
+        /**
+         * Every slope is shown as an icon at its start point (LTS startingpoint, DSS position).
+         * The slope track (KML/GPX) is only loaded when the icon is hovered or clicked,
+         * loading all ~1000 tracks at once gets us blocked by the track provider.
+         */
+        let gpsinfo = activity.GpsInfo || [];
+        let start = gpsinfo.find(x => x.Gpstype == "startingpoint") || gpsinfo.find(x => x.Gpstype == "position");
 
-        Object.keys(activity.GpsTrack).forEach(key =>
+        if (start && !this.isPlaceholderGps(start) && this.isInsideArea(start))
         {
-          if (activity.GpsTrack[key].Type == "detailed")
-          {
-            var diffpiste = activity["Ratings.Difficulty"];
-            var pistecolor = 'grey';
-
-            if (diffpiste == "2")
-            {
-              pistecolor = 'blue';
-            }
-            if (diffpiste == "4")
-            {
-              pistecolor = 'red';
-            }
-            if (diffpiste == "6")
-            {
-              pistecolor = 'black';
-            }
-
-            var slopeopened = '<span style="background-color:green">Geöffnet</span>';
-            if (activity.IsOpen == false)
-            {
-              slopeopened = '<span style="background-color:red">Geschlossen</span>';
-              //markerlatlng.items.opened = "red";
-            }
-
-            var iskml = false;
-            var isgpx = true;
-
-            var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
-
-            if (activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
-            {
-              url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCustomCached/kml/' + activity.GpsTrack[key].GpxTrackUrl;
-              iskml = true;
-              isgpx = false;
-            }
-
-            let popupSlope = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b>';
-            popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
-            popupSlope += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
-            popupSlope += '<div>' + slopeopened + '</div>';
-
-            if (activity["Detail." + this.propLanguage + ".BaseText"] != null)
-            {
-              popupSlope += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
-            }
-            popupSlope += '</div>';
-
-            let popupslope = L.popup().setContent(popupSlope);
-
-            if (isgpx)
-            {
-              let gpx = new L2.GPX(url, {
-                async: true,
-                gpx_options: { parseElements: 'track' },
-                polyline_options: { color: pistecolor },
-                marker_options: { startIconUrl: null, endIconUrl: null },
-                // marker_options: {
-                //     startIconUrl: '../Content/images/pin-icon-start.png',
-                //     endIconUrl: '../Content/images/pin-icon-end.png',
-                //     shadowUrl: '../Content/images/pin-shadow.png'
-                // }
-              }).on('loaded', function (e)
-              {
-                //map.fitBounds(e.target.getBounds());
-              }).addTo(this.map).bindPopup(popupslope);
-            }
-
-            if (iskml)
-            {
-              //console.log("kml parsing " + pistecolor + " difficulty " + diffpiste);
-
-              fetch(url)
-                .then(res => res.text())
-                .then(kmltext =>
-                {
-                  // Create new kml overlay
-                  const parser = new DOMParser();
-                  const kml = parser.parseFromString(kmltext, 'text/xml');
-                  const track = new L.KML(kml, {
-                    async: true,
-                    color: pistecolor
-                  }).on('loaded', function (e)
-                  {
-                  }).setStyle({ color: pistecolor }).addTo(this.map).bindPopup(popupslope);  //.setStyle({color: pistecolor })
-
-                  //this.map.addLayer(track);
-
-                  // Adjust map to show the kml
-                  //const bounds = track.getBounds();
-                  //map.fitBounds(bounds);
-                }); //.addTo(this.map); //.bindPopup(popupslope);
-            }
-
-
-
-            //this.map.addLayer(gpx).bindPopup(popupslope);
-          }
-        });
-
-      }
-      else if (((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && activity.SubType == "Aufstiegsanlagen")
-      {
-
-        //TODO extract from ODHTags
-        var assignedlifttype = "";
-
-        if (activity.SmgTags)
-        {
-          activity.SmgTags.forEach(element =>
-          {
-            if (element != "aufstiegsanlagen" && element != "anderes" && element != "weitere aufstiegsanlagen" && element != "activity")
-            {
-              assignedlifttype = element;
-            }
+          // Small disc in the piste colour with a skier glyph
+          let slopeicon = L.divIcon({
+            className: 'slope-point-icon',
+            html: '<div class="slope-point' + (activity.IsOpen == false ? ' slope-point--closed' : '') + '" style="background-color: ' + slopeColor(activity["Ratings.Difficulty"]) + '">' +
+                    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                      '<circle cx="15.5" cy="4.5" r="2"/>' +
+                      '<path d="M14 8 9.5 11.5l3 2.5-2 5"/>' +
+                      '<path d="M4 16.5 19 21"/>' +
+                    '</svg>' +
+                  '</div>',
+            iconSize: L.point(18, 18)
           });
+
+          let popupcontent = this.slopePopupContent(activity);
+
+          let marker = L.marker([start.Latitude, start.Longitude], {
+            icon: slopeicon
+          }).bindPopup(L.popup().setContent(popupcontent));
+
+          let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
+
+          if (track)
+          {
+            const loadTrack = () =>
+            {
+              marker.off('mouseover', loadTrack);
+              marker.off('click', loadTrack);
+              let style = {
+                color: slopeColor(activity["Ratings.Difficulty"]),
+                weight: 3,
+                opacity: activity.IsOpen == false ? 0.35 : 0.85,
+                lineCap: 'round',
+                lineJoin: 'round'
+              };
+
+              this.loadTrack(track, style, popupcontent);
+            };
+
+            marker.on('mouseover', loadTrack);
+            marker.on('click', loadTrack);
+          }
+
+          columns_layer_array.push(marker);
         }
+      }
+      else if (((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && this.hasTag(activity, "lifts"))
+      {
 
-        //console.log(assignedlifttype);
-
-        var activitysubtype = "";
-
-        if (assignedlifttype == "seilbahn")
-          activitysubtype = "iconSeilbahn";
-        else if (assignedlifttype == "standseilbahn/zahnradbahn" || assignedlifttype == "schrägaufzug" || assignedlifttype == "unterirdische bahn")
-          activitysubtype = "iconZahnrad";
-        else if (assignedlifttype == "skilift" || assignedlifttype == "kleinskilift")
-          activitysubtype = "iconSkilift";
-        else if (assignedlifttype == "umlaufbahn")
-          activitysubtype = "iconUmlaufbahn";
-        else if (assignedlifttype == "kabinenbahn")
-          activitysubtype = "iconKabinenbahn";
-        else if (assignedlifttype == "sessellift")
-          activitysubtype = "iconSessellift";
-        else if (assignedlifttype == "telemix")
-          activitysubtype = "iconTelemix";
-        else if (assignedlifttype == "förderband")
-          activitysubtype = "iconFoerderband";
-        else if (assignedlifttype == "zug")
-          activitysubtype = "iconZug";
-        else if (assignedlifttype == "skibus")
-          activitysubtype = "iconBus";
-        else
-          activitysubtype = "iconSessellift";
-
-        let fillChar = ''; //'<span class="icon icon-sessellift">test</span>'; //station.pcode ? '#' : '&nbsp;';
+        let lifttype = this.liftType(activity);
 
         let icon = L.divIcon({
-          html: '<div class="marker"><div style="background-color: white">' + fillChar + '</div></div>',
-          //html: '<div class="marker"><div style="background-color: ' + this.types[activity.Type] + '">' + fillChar + '</div></div>',
-          iconSize: L.point(17, 17)
+          className: 'lift-station-icon',
+          html: '<div class="lift-station' + (activity.IsOpen == false ? ' lift-station--closed' : '') + '"></div>',
+          iconSize: L.point(12, 12)
         });
 
-        var markerlatlng = {};
-        markerlatlng.itemcount = activity.GpsInfo.length;
-        markerlatlng.items = {};
-        markerlatlng.items.opened = "green";
-        markerlatlng.items.elements = [];
+        /**
+         * Lifts are drawn as straight lines between their stations (valley, middle, mountain).
+         * If the lift has a detailed track (DSS KML), it is loaded on the first hover or click
+         * on the line or a station and replaces the straight line.
+         */
+        let stations = ["valleystationpoint", "middlestationpoint", "mountainstationpoint"]
+          .map(type => (activity.GpsInfo || []).find(x => x.Gpstype == type && !this.isPlaceholderGps(x)))
+          .filter(x => x && this.isInsideArea(x));
 
-        var opened = '<span style="background-color:green">Geöffnet</span>';
-        if (activity.IsOpen == false)
+        let isClosed = activity.IsOpen == false;
+        let linecolor = isClosed ? colors.closed : colors.lift;
+        let linelayers = [];
+        let interactivelayers = [];
+
+        stations.forEach(station =>
         {
-          opened = '<span style="background-color:red">Geschlossen</span>';
-          markerlatlng.items.opened = "grey";
+          let marker = L.marker([station.Latitude, station.Longitude], {
+            icon: icon,
+          }).bindPopup(L.popup().setContent(this.liftPopupContent(activity, lifttype, station.Gpstype)));
+
+          columns_layer_array.push(marker);
+          interactivelayers.push(marker);
+        });
+
+        let popupline = L.popup().setContent(this.liftPopupContent(activity, lifttype));
+
+        for (let i = 1; i < stations.length; i++)
+        {
+          let segment = [
+            [stations[i - 1].Latitude, stations[i - 1].Longitude],
+            [stations[i].Latitude, stations[i].Longitude]
+          ];
+
+          // White casing below the lift line keeps it readable on top of slopes and the base map
+          let casing = L.polyline(segment, {
+            pane: 'lifts',
+            color: colors.surface,
+            opacity: 0.9,
+            weight: 5,
+            lineCap: 'round',
+            interactive: false
+          }).addTo(this.map);
+
+          let polyline = L.polyline(segment, {
+            pane: 'lifts',
+            color: linecolor,
+            opacity: 1,
+            weight: 2.5,
+            lineCap: 'round',
+            dashArray: isClosed ? '4 6' : null
+          }).addTo(this.map).bindPopup(popupline);
+
+          polyline.on('mouseover', function () { this.setStyle({ weight: 4.5 }); });
+          polyline.on('mouseout', function () { this.setStyle({ weight: 2.5 }); });
+
+          linelayers.push(casing, polyline);
+          interactivelayers.push(polyline);
         }
 
-        if (activity.Source == 'lts')
+        let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
+
+        if (track && interactivelayers.length > 0)
         {
+          let style = { pane: 'lifts', color: linecolor, weight: 2.5, opacity: 1, lineCap: 'round', dashArray: isClosed ? '4 6' : null };
 
-
-          //Sort activityGpsInfo by Talstation, Mittelstation, Bergstation
-          var gpsinfosorted = [];
-
-          if (activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"))
-            gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "valleystationpoint"));
-          if (activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"))
-            gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "middlestationpoint"));
-          if (activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"))
-            gpsinfosorted.push(activity.GpsInfo.find(x => x.Gpstype == "mountainstationpoint"));
-
-          Object.keys(gpsinfosorted).forEach(key =>
+          const loadTrack = () =>
           {
-
-            var pos = [
-              gpsinfosorted[key].Latitude,
-              gpsinfosorted[key].Longitude
-            ];
-
-            let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + gpsinfosorted[key].Gpstype + '</i>';
-            popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
-            popupCont += '<div>' + '<span class="icon ' + activitysubtype + '"></span>' + '</div>';
-            popupCont += '<div>' + assignedlifttype + '</div>';
-            popupCont += '<div>' + opened + '</div>';
-
-            if (activity["Detail." + this.propLanguage + ".BaseText"] != null)
+            interactivelayers.forEach(layer =>
             {
-              popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
-            }
-            popupCont += '</div>';
+              layer.off('mouseover', loadTrack);
+              layer.off('click', loadTrack);
+            });
 
-            let popup = L.popup().setContent(popupCont);
+            // The real track replaces the straight line
+            this.loadTrack(track, style, this.liftPopupContent(activity, lifttype), () => linelayers.forEach(layer => layer.remove()));
+          };
 
-            let marker = L.marker(pos, {
-              icon: icon,
-            }).bindPopup(popup);
-
-            var distancecheck = 0;
-
-            //Check if GPS Point is outside South Tyrol
-            if (this.propCheckGps == true)
-            {
-              distancecheck = getDistanceFromLatLonInKm(46.655781, 11.4296877, pos[0], pos[1]);
-              //console.log(distancecheck);
-            }
-
-
-            //Add only if distance is less than 200 km
-            if (distancecheck < 200)
-            {
-              columns_layer_array.push(marker);
-              markerlatlng.items.elements.push(marker.getLatLng());
-            }
-
-            //Gps Track on Map
-            if (activity.GpsTrack && activity.GpsTrack.length > 0)
-            {
-              Object.keys(activity.GpsTrack).forEach(key =>
-              {
-                if (activity.GpsTrack[key].Type == "detailed")
-                {
-                  var url = activity.GpsTrack[key].GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/api/Activity/Gpx/');;
-
-                  let gpx = new L2.GPX(url, {
-                    async: true,
-                    gpx_options: { parseElements: 'track' }
-                    // marker_options: {
-                    //     startIconUrl: '../Content/images/pin-icon-start.png',
-                    //     endIconUrl: '../Content/images/pin-icon-end.png',
-                    //     shadowUrl: '../Content/images/pin-shadow.png'
-                    // }
-                  }).on('loaded', function (e)
-                  {
-                    //map.fitBounds(e.target.getBounds());
-                  }).addTo(this.map);
-                }
-              });
-            }
-
+          interactivelayers.forEach(layer =>
+          {
+            layer.on('mouseover', loadTrack);
+            layer.on('click', loadTrack);
           });
-          if (markerlatlng.itemcount > 1)
-          {
-
-            for (var i = 1; i < markerlatlng.itemcount; i++)
-            {
-
-              let popupLineCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
-              //popupLineCont += '<table>';
-              //popupLineCont += '<tr>';
-              popupLineCont += '<div>' + activity.SubType + '</div><br />';
-              //popupLineCont += '</tr>';
-              //popupLineCont += '<tr>';
-              popupLineCont += '<div>' + '<span class="icon ' + activitysubtype + '"></span>' + '</div>';
-              popupLineCont += '<div>' + assignedlifttype + '</div><br />';
-              //popupLineCont += '</tr>';
-              //popupLineCont += '<tr>';
-              popupLineCont += '<div>' + opened + '</div>';
-              //popupLineCont += '</tr>';
-              popupLineCont += '</div>';
-
-              let popupline = L.popup().setContent(popupLineCont);
-
-
-              var polyline = L.polyline(markerlatlng.items.elements.slice(i - 1, i + 1), {
-                color: markerlatlng.items.opened,
-                opacity: 0.8,
-                smoothFactor: 1,
-                weight: 6
-              }).addTo(this.map).bindPopup(popupline);
-
-              // polyline.on('mouseover', function (e) {
-              //   this.setStyle({
-              //     weight: 10
-              //   });
-              //   this.openPopup();
-              // });
-              // polyline.on('mouseout', function (e) {
-              //   this.setStyle({
-              //     weight: 6
-              //   });
-              //   this.closePopup();
-              // });
-            }
-          }
-        }
-        else if (activity.Source == 'dss')
-        {
-
-          Object.keys(activity.GpsTrack).forEach(key =>
-          {
-            if (activity.GpsTrack[key].Type == "detailed")
-            {
-
-              let popupCont = '<div class="popup"><b>' + activity["Detail." + this.propLanguage + ".Title"] + '</b><br />';
-              popupCont += '<div>' + activity.AdditionalPoiInfos[this.propLanguage].SubType + '</div>';
-              popupCont += '<div>' + '<span class="icon ' + activitysubtype + '"></span>' + '</div>';
-              popupCont += '<div>' + assignedlifttype + '</div>';
-              popupCont += '<div>' + opened + '</div>';
-
-              if (activity["Detail." + this.propLanguage + ".BaseText"] != null)
-              {
-                popupCont += '<div>' + activity["Detail." + this.propLanguage + ".BaseText"] + '</div>';
-              }
-              popupCont += '</div>';
-
-              let popup = L.popup().setContent(popupCont);
-
-              // let marker = L.marker(pos, {
-              //   icon: icon,
-              // }).bindPopup(popup);
-
-              // columns_layer_array.push(marker);
-
-              //markerlatlng.items.elements.push(marker.getLatLng());
-
-              var iskml = false;
-              var url = '';
-
-              if (activity.GpsTrack[key].Format && activity.GpsTrack[key].Format == "kml")
-              {
-                url = 'https://images.tourism.testingmachine.eu/api/ODHProxyCustomCached/kml/' + activity.GpsTrack[key].GpxTrackUrl;
-                iskml = true;
-              }
-
-              if (iskml)
-              {
-                //console.log("kml parsing lift");
-
-                fetch(url)
-                  .then(res => res.text())
-                  .then(kmltext =>
-                  {
-                    // Create new kml overlay
-                    const parser = new DOMParser();
-                    const kml = parser.parseFromString(kmltext, 'text/xml');
-                    const track = new L.KML(kml, {
-                      async: true
-                      //color: pistecolor
-                    }).on('loaded', function (e)
-                    {
-                    }).setStyle({ color: markerlatlng.items.opened }).addTo(this.map).bindPopup(popup);  //.setStyle({color: pistecolor })
-
-                    //this.map.addLayer(track);
-
-                    // Adjust map to show the kml
-                    //const bounds = track.getBounds();
-                    //map.fitBounds(bounds);
-                  }); //.addTo(this.map); //.bindPopup(popupslope);
-              }
-
-
-
-              //this.map.addLayer(gpx).bindPopup(popupslope);
-            }
-          });
-
         }
       }
     });
     //Getting Skiareas
-    await this.fetchSkiAreas(this.propLanguage);
+    await this.fetchSkiAreas(this.propLanguage, this.propSkiAreaSource);
 
     this.nodes.map(skiarea =>
     {
@@ -498,24 +534,25 @@ class MapWidget extends LitElement
         skiarea.Longitude
       ];
 
-      // let iconskiarea = L.divIcon({
-      //   html: '<div class="marker"><div style="background-color: red"></div></div>',
-      //   iconSize: L.point(17, 17)
-      // });
-
-      var base64icon = "data:image/png;base64,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";
-
-      let iconskiarea = new L.Icon({
-        iconUrl: base64icon,
-        iconSize: L.point(48, 48),
-        opacity: 0.8
+      // Round badge with a mountain glyph marking the ski area centre
+      let iconskiarea = L.divIcon({
+        className: 'skiarea-icon',
+        html: '<div class="skiarea-marker">' +
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                  '<path class="skiarea-marker__mountain" d="M2.5 19 9 8l3.2 5.3 2.3-3.3L21.5 19z"/>' +
+                  '<path class="skiarea-marker__snow" d="M9 8l-2 3.4 1.2-.6.8 1 .9-1 1.2.4z"/>' +
+                '</svg>' +
+              '</div>',
+        iconSize: L.point(36, 36),
+        iconAnchor: L.point(18, 18),
+        popupAnchor: L.point(0, -18)
       });
 
-      let popupContSkiArea = '<div class="popup"><b>' + skiarea["Detail." + this.propLanguage + ".Title"] + '</b><br /><i>' + skiarea["SkiRegionName." + this.propLanguage] + '</i>';
+      let popupContSkiArea = '<div class="popup"><div class="popup__title">' + skiarea["Detail." + this.propLanguage + ".Title"] + '</div><div class="popup__meta">' + skiarea["SkiRegionName." + this.propLanguage] + '</div>';
       if (skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
       {
         //Opening
-        popupContSkiArea += '<div>' + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " - " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
+        popupContSkiArea += '<div class="popup__meta">' + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " - " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
         //BaseText
         popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';
       }
@@ -525,31 +562,31 @@ class MapWidget extends LitElement
 
       let marker = L.marker(posskiarea, {
         icon: iconskiarea,
+        riseOnHover: true,
+        zIndexOffset: 1000
       }).addTo(this.map).bindPopup(popupskiarea);
 
     });
 
 
     this.visibleNodes = columns_layer_array.length;
-    let columns_layer = L.layerGroup(columns_layer_array, {});
 
-    /** Prepare the cluster group for station markers */
-    this.layer_columns = new L.markerClusterGroup({
-      showCoverageOnHover: false,
-      chunkedLoading: true,
-      disableClusteringAtZoom: 13,
-      iconCreateFunction: function (cluster)
-      {
-        return L.divIcon({
-          html: '<div class="marker_cluster__marker">' + cluster.getChildCount() + '</div>',
-          iconSize: L.point(32, 32)
-        });
-      }
-    });
-    /** Add maker layer in the cluster group */
-    this.layer_columns.addLayer(columns_layer);
-    /** Add the cluster group to the map */
-    this.map.addLayer(this.layer_columns);
+    /**
+     * Lift station and slope point markers are not clustered: a cluster would detach the stations from
+     * their lift line. Instead they are only shown when zoomed in far enough to tell them apart.
+     */
+    this.stationLayer = L.layerGroup(columns_layer_array);
+
+    const toggleStations = () =>
+    {
+      if (this.map.getZoom() >= this.stationMinZoom)
+        this.stationLayer.addTo(this.map);
+      else
+        this.stationLayer.remove();
+    };
+
+    this.map.on('zoomend', toggleStations);
+    toggleStations();
   }
 
   async firstUpdated()
@@ -562,10 +599,10 @@ class MapWidget extends LitElement
   {
     return html`
       <style>
-        ${getStyle(style__markercluster)}
         ${getStyle(style__leaflet)}
         ${getStyle(style__maplibre)}
         ${getStyle(style)}
+        ${cssVariables()}
       </style>
       <div id="map_widget">
         <div id="map" class="map"></div>

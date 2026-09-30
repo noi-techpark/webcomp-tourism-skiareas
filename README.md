@@ -53,15 +53,27 @@ store](https://webcomponents.opendatahub.com/webcomponent/8282479b-dc13-5012-939
 Include the Javascript file `dist/map_widget.min.js` in your HTML and define the web component like this:
 
 ```html
-<map-widget types="512" language="de" centermap=""></map-widget>
+<map-widget types="lifts" language="de" centermap=""></map-widget>
 ```
 
 ### Attributes
 
 #### types
 
-Type: bitmask
-Options: Refer to https://tourism.opendatahub.com/api/ActivityTypes
+Type: string
+Options: "slopes", "lifts" or "slopes,lifts" (passed as tagfilter to the ODHActivityPoi endpoint)
+
+#### source
+
+Type: string
+Options: "lts", "dss", "discoverswiss" or a comma separated combination, default "lts,dss"
+Filters slopes and lifts by data provider
+
+#### skiareasource
+
+Type: string
+Options: "idm", "dss", "discoverswiss" or a comma separated combination, default "idm,dss"
+Filters ski areas by data provider
 
 #### language
 
@@ -84,8 +96,7 @@ on your local machine for development and testing purposes.
 
 To build the project, the following prerequisites must be met:
 
-- Node 12 / NPM 8.1.2
-- Node 14 / NPM 6.14.18
+- Node 16 / NPM 8 (see `.nvmrc`)
 
 For a ready to use Docker environment with all prerequisites already installed and prepared, you can check out the [Docker environment](#docker-environment) section.
 

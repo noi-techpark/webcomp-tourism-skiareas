@@ -10,7 +10,7 @@ SPDX-FileCopyrightText = "(c) 2019 ReturnValues, Inc. http://iconfont.io"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = [".github/**", "infrastructure/**", ".gitignore", ".pre-commit-config.yaml", "LICENSE.md", ".editorconfig", "**.png", "**.json", ".env.example"]
+path = [".github/**", "infrastructure/**", ".gitignore", ".nvmrc", ".pre-commit-config.yaml", "LICENSE.md", ".editorconfig", "**.png", "**.json", ".env.example"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
 SPDX-License-Identifier = "CC0-1.0"

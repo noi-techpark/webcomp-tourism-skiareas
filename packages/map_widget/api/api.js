@@ -25,11 +25,18 @@ export function callGet(domain, path, params) {
 		});
 }
 
-export async function fetchActivities(type, language, source) {	
+// Legacy activitytype bitmask values mapped to tag filters
+const legacyTypeTags = {
+	"256": "slopes",
+	"512": "lifts",
+	"768": "slopes,lifts"
+};
+
+export async function fetchActivities(tags, language, source) {
 		return callGet(config.API_BASE_URL_TOURISM,"/ODHActivityPoi", {
 			pagesize: 12000,
-			activitytype: type,
-			fields: "Id,GpsInfo,Type,SubType,PoiType,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText,Source,SmgTags,Ratings.Difficulty,AdditionalPoiInfos",
+			tagfilter: legacyTypeTags[tags] || tags,
+			fields: "Id,GpsInfo,Tags,TagIds,IsOpen,GpsTrack,Detail." + language +".Title,Detail." + language + ".BaseText,Source,SmgTags,Ratings.Difficulty,AdditionalPoiInfos",
 			active: true,
 			language: language,
 			source: source,
@@ -58,13 +65,14 @@ export async function fetchMeasuringpoints(type, language) {
 	});
 }
 
-export async function fetchSkiAreas(language) {	
+export async function fetchSkiAreas(language, source) {	
 	return callGet(config.API_BASE_URL_TOURISM,"/SkiArea", {
 		fields: "Id,Latitude,Longitude,SkiRegionName." + language + ",Detail." + language +".Title,Detail." + language + ".BaseText,ContactInfos" +  language + 
 				",Active,OperationSchedule[0].Start,OperationSchedule[0].Stop" +
 				",TotalSlopeKm,SlopeKmBlue,SlopeKmRed,SlopeKmBlack,LiftCount",
 		active: true,
 		language: language,
+		source: source,
 		origin: config.ORIGIN
 	})
 	.then(response => {			

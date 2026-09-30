@@ -43,15 +43,15 @@
       {
         "key": "types",
         "type": "select",
-        "label": "Bitmask Filter on Slopes 256, Lifts 512, Filter on Lifts and Slopes 768, default is 768",
+        "label": "Tag filter: slopes, lifts or both (slopes,lifts), default is slopes,lifts",
         "required": false,
         "options": {
           "values": [
-            "256",
-            "512",
-            "768"
+            "slopes",
+            "lifts",
+            "slopes,lifts"
           ],
-          "default": "768"
+          "default": "slopes,lifts"
         }
       },
       {
@@ -71,15 +71,33 @@
       {
         "key": "source",
         "type": "select",
-        "label": "Data provider Default is `lts,dss`",
+        "label": "Data provider for slopes and lifts (lts, dss, discoverswiss). Default is `lts,dss`",
         "required": false,
         "options": {
           "values": [
             "lts",
             "dss",
-            "lts,dss"
+            "discoverswiss",
+            "lts,dss",
+            "lts,dss,discoverswiss"
           ],
           "default": "lts,dss"
+        }
+      },
+      {
+        "key": "skiareasource",
+        "type": "select",
+        "label": "Data provider for ski areas (idm, dss, discoverswiss). Default is `idm,dss`",
+        "required": false,
+        "options": {
+          "values": [
+            "idm",
+            "dss",
+            "discoverswiss",
+            "idm,dss",
+            "idm,dss,discoverswiss"
+          ],
+          "default": "idm,dss"
         }
       },
       {
