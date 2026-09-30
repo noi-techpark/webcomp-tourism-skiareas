@@ -10,11 +10,11 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
       - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v1
+        uses: fsfe/reuse-action@v5
       - uses: noi-techpark/github-actions/npm-build@v2
         with:
           build-command: npm run build
@@ -24,7 +24,7 @@ jobs:
           origin-test-directory: packages
 
   deploy-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-test
@@ -46,7 +46,7 @@ jobs:
           version-tag: ${{github.sha}}
 
   deploy-prod:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     concurrency: deploy-prod

@@ -1,0 +1,22 @@
+version = 1
+SPDX-PackageName = "webcomp-tourism-skiareas"
+SPDX-PackageSupplier = "NOI Techpark <digital@noi.bz.it>"
+SPDX-PackageDownloadLocation = "https://github.com/noi-techpark/webcomp-tourism-skiareas"
+
+[[annotations]]
+path = ["dist/fonts/iconfont.**", "work/scripts/fonts/iconfont.**", "packages/map_widget/scss/iconfont.**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) 2019 ReturnValues, Inc. http://iconfont.io"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [".github/**", "infrastructure/**", ".gitignore", ".pre-commit-config.yaml", "LICENSE.md", ".editorconfig", "**.png", "**.json", ".env.example"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["dist/map_widget.min.js", "work/scripts/map_widget.js"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
