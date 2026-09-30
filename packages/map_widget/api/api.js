@@ -6,9 +6,9 @@ import axios from "axios";
 import config from "./config";
 
 export function callGet(domain, path, params) {
-	console.log("call = " + domain + path);
-	console.log("call params = ");
-	console.log(params);
+	// console.log("call = " + domain + path);
+	// console.log("call params = ");
+	// console.log(params);
 	return axios
 		.get(domain + path, {
 			params: params

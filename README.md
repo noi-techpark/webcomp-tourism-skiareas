@@ -72,7 +72,7 @@ Data provider for slopes, lifts and ski areas:
 | source | slopes and lifts | ski areas |
 |---|---|---|
 | lts | lts | idm |
-| dss | dss | idm |
+| dss | dss | idm, dss |
 | discoverswiss | discoverswiss | discoverswiss |
 
 #### language

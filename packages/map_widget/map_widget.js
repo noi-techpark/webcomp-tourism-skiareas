@@ -23,7 +23,7 @@ import L3 from 'leaflet-kml';
  */
 const DATA_PROVIDERS = {
   lts: { activities: 'lts', skiareas: 'idm' },
-  dss: { activities: 'dss', skiareas: 'idm' },
+  dss: { activities: 'dss', skiareas: 'idm' }, //comment out dss because the skiareas does not have a valid gps
   discoverswiss: { activities: 'discoverswiss', skiareas: 'discoverswiss' }
 };
 
@@ -302,6 +302,15 @@ class MapWidget extends LitElement
     return content;
   }
 
+  // A GpsInfo point can be drawn: numeric coordinates (the API sometimes sends "NaN"), no placeholder, inside the area
+  isUsableGps(gps)
+  {
+    return !!gps &&
+      Number.isFinite(gps.Latitude) && Number.isFinite(gps.Longitude) &&
+      !this.isPlaceholderGps(gps) &&
+      this.isInsideArea(gps);
+  }
+
   // With checkgpspoints set, points more than 200 km from the centre of South Tyrol are ignored
   isInsideArea(gps)
   {
@@ -320,8 +329,8 @@ class MapWidget extends LitElement
     parseList(this.propSource).forEach(provider =>
     {
       let mapping = DATA_PROVIDERS[provider] || { activities: provider, skiareas: provider };
-      activities.add(mapping.activities);
-      skiareas.add(mapping.skiareas);
+      mapping.activities.split(',').forEach(x => activities.add(x));
+      mapping.skiareas.split(',').forEach(x => skiareas.add(x));
     });
 
     return { activities: [...activities].join(','), skiareas: [...skiareas].join(',') };
@@ -402,6 +411,163 @@ class MapWidget extends LitElement
     return { icon: icons[type], label: label };
   }
 
+  // Draws one slope or lift, station and slope markers are collected in columns_layer_array
+  drawActivity(activity, columns_layer_array)
+  {
+    if (this.hasTag(activity, "slopes"))
+    {
+      /**
+       * Every slope is shown as an icon at its start point (LTS startingpoint, DSS position).
+       * The slope track (KML/GPX) is only loaded when the icon is hovered or clicked,
+       * loading all ~1000 tracks at once gets us blocked by the track provider.
+       */
+      let gpsinfo = activity.GpsInfo || [];
+      let start = gpsinfo.find(x => x.Gpstype == "startingpoint") || gpsinfo.find(x => x.Gpstype == "position");
+
+      if (this.isUsableGps(start))
+      {
+        // Small disc in the piste colour with a skier glyph
+        let slopeicon = L.divIcon({
+          className: 'slope-point-icon',
+          html: '<div class="slope-point' + (activity.IsOpen == false ? ' slope-point--closed' : '') + '" style="background-color: ' + slopeColor(activity["Ratings.Difficulty"]) + '">' +
+                  '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                    '<circle cx="15.5" cy="4.5" r="2"/>' +
+                    '<path d="M14 8 9.5 11.5l3 2.5-2 5"/>' +
+                    '<path d="M4 16.5 19 21"/>' +
+                  '</svg>' +
+                '</div>',
+          iconSize: L.point(18, 18)
+        });
+
+        let popupcontent = this.slopePopupContent(activity);
+
+        let marker = L.marker([start.Latitude, start.Longitude], {
+          icon: slopeicon
+        }).bindPopup(L.popup().setContent(popupcontent));
+
+        let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
+
+        if (track)
+        {
+          const loadTrack = () =>
+          {
+            marker.off('mouseover', loadTrack);
+            marker.off('click', loadTrack);
+            let style = {
+              color: slopeColor(activity["Ratings.Difficulty"]),
+              weight: 3,
+              opacity: activity.IsOpen == false ? 0.35 : 0.85,
+              lineCap: 'round',
+              lineJoin: 'round'
+            };
+
+            this.loadTrack(track, style, popupcontent);
+          };
+
+          marker.on('mouseover', loadTrack);
+          marker.on('click', loadTrack);
+        }
+
+        columns_layer_array.push(marker);
+      }
+    }
+    else if (((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && this.hasTag(activity, "lifts"))
+    {
+
+      let lifttype = this.liftType(activity);
+
+      let icon = L.divIcon({
+        className: 'lift-station-icon',
+        html: '<div class="lift-station' + (activity.IsOpen == false ? ' lift-station--closed' : '') + '"></div>',
+        iconSize: L.point(12, 12)
+      });
+
+      /**
+       * Lifts are drawn as straight lines between their stations (valley, middle, mountain).
+       * If the lift has a detailed track (DSS KML), it is loaded on the first hover or click
+       * on the line or a station and replaces the straight line.
+       */
+      let stations = ["valleystationpoint", "middlestationpoint", "mountainstationpoint"]
+        .map(type => (activity.GpsInfo || []).find(x => x.Gpstype == type && this.isUsableGps(x)))
+        .filter(x => x);
+
+      let isClosed = activity.IsOpen == false;
+      let linecolor = isClosed ? colors.closed : colors.lift;
+      let linelayers = [];
+      let interactivelayers = [];
+
+      stations.forEach(station =>
+      {
+        let marker = L.marker([station.Latitude, station.Longitude], {
+          icon: icon,
+        }).bindPopup(L.popup().setContent(this.liftPopupContent(activity, lifttype, station.Gpstype)));
+
+        columns_layer_array.push(marker);
+        interactivelayers.push(marker);
+      });
+
+      let popupline = L.popup().setContent(this.liftPopupContent(activity, lifttype));
+
+      for (let i = 1; i < stations.length; i++)
+      {
+        let segment = [
+          [stations[i - 1].Latitude, stations[i - 1].Longitude],
+          [stations[i].Latitude, stations[i].Longitude]
+        ];
+
+        // White casing below the lift line keeps it readable on top of slopes and the base map
+        let casing = L.polyline(segment, {
+          pane: 'lifts',
+          color: colors.surface,
+          opacity: 0.9,
+          weight: 5,
+          lineCap: 'round',
+          interactive: false
+        }).addTo(this.map);
+
+        let polyline = L.polyline(segment, {
+          pane: 'lifts',
+          color: linecolor,
+          opacity: 1,
+          weight: 2.5,
+          lineCap: 'round',
+          dashArray: isClosed ? '4 6' : null
+        }).addTo(this.map).bindPopup(popupline);
+
+        polyline.on('mouseover', function () { this.setStyle({ weight: 4.5 }); });
+        polyline.on('mouseout', function () { this.setStyle({ weight: 2.5 }); });
+
+        linelayers.push(casing, polyline);
+        interactivelayers.push(polyline);
+      }
+
+      let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
+
+      if (track && interactivelayers.length > 0)
+      {
+        let style = { pane: 'lifts', color: linecolor, weight: 2.5, opacity: 1, lineCap: 'round', dashArray: isClosed ? '4 6' : null };
+
+        const loadTrack = () =>
+        {
+          interactivelayers.forEach(layer =>
+          {
+            layer.off('mouseover', loadTrack);
+            layer.off('click', loadTrack);
+          });
+
+          // The real track replaces the straight line
+          this.loadTrack(track, style, this.liftPopupContent(activity, lifttype), () => linelayers.forEach(layer => layer.remove()));
+        };
+
+        interactivelayers.forEach(layer =>
+        {
+          layer.on('mouseover', loadTrack);
+          layer.on('click', loadTrack);
+        });
+      }
+    }
+  }
+
   async drawMap()
   {
 
@@ -411,167 +577,26 @@ class MapWidget extends LitElement
 
     await this.fetchActivities(parseList(this.propTypes).join(','), this.propLanguage, sources.activities);
 
-    this.nodes.map(activity =>
+    // One broken record must not stop the rest of the map (and the ski areas) from being drawn
+    this.nodes.forEach(activity =>
     {
-
-      if (this.hasTag(activity, "slopes"))
+      try
       {
-        /**
-         * Every slope is shown as an icon at its start point (LTS startingpoint, DSS position).
-         * The slope track (KML/GPX) is only loaded when the icon is hovered or clicked,
-         * loading all ~1000 tracks at once gets us blocked by the track provider.
-         */
-        let gpsinfo = activity.GpsInfo || [];
-        let start = gpsinfo.find(x => x.Gpstype == "startingpoint") || gpsinfo.find(x => x.Gpstype == "position");
-
-        if (start && !this.isPlaceholderGps(start) && this.isInsideArea(start))
-        {
-          // Small disc in the piste colour with a skier glyph
-          let slopeicon = L.divIcon({
-            className: 'slope-point-icon',
-            html: '<div class="slope-point' + (activity.IsOpen == false ? ' slope-point--closed' : '') + '" style="background-color: ' + slopeColor(activity["Ratings.Difficulty"]) + '">' +
-                    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-                      '<circle cx="15.5" cy="4.5" r="2"/>' +
-                      '<path d="M14 8 9.5 11.5l3 2.5-2 5"/>' +
-                      '<path d="M4 16.5 19 21"/>' +
-                    '</svg>' +
-                  '</div>',
-            iconSize: L.point(18, 18)
-          });
-
-          let popupcontent = this.slopePopupContent(activity);
-
-          let marker = L.marker([start.Latitude, start.Longitude], {
-            icon: slopeicon
-          }).bindPopup(L.popup().setContent(popupcontent));
-
-          let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
-
-          if (track)
-          {
-            const loadTrack = () =>
-            {
-              marker.off('mouseover', loadTrack);
-              marker.off('click', loadTrack);
-              let style = {
-                color: slopeColor(activity["Ratings.Difficulty"]),
-                weight: 3,
-                opacity: activity.IsOpen == false ? 0.35 : 0.85,
-                lineCap: 'round',
-                lineJoin: 'round'
-              };
-
-              this.loadTrack(track, style, popupcontent);
-            };
-
-            marker.on('mouseover', loadTrack);
-            marker.on('click', loadTrack);
-          }
-
-          columns_layer_array.push(marker);
-        }
+        this.drawActivity(activity, columns_layer_array);
       }
-      else if (((activity.GpsTrack && activity.GpsTrack.length > 0) || (activity.GpsInfo && activity.GpsInfo.length > 0)) && this.hasTag(activity, "lifts"))
+      catch (e)
       {
-
-        let lifttype = this.liftType(activity);
-
-        let icon = L.divIcon({
-          className: 'lift-station-icon',
-          html: '<div class="lift-station' + (activity.IsOpen == false ? ' lift-station--closed' : '') + '"></div>',
-          iconSize: L.point(12, 12)
-        });
-
-        /**
-         * Lifts are drawn as straight lines between their stations (valley, middle, mountain).
-         * If the lift has a detailed track (DSS KML), it is loaded on the first hover or click
-         * on the line or a station and replaces the straight line.
-         */
-        let stations = ["valleystationpoint", "middlestationpoint", "mountainstationpoint"]
-          .map(type => (activity.GpsInfo || []).find(x => x.Gpstype == type && !this.isPlaceholderGps(x)))
-          .filter(x => x && this.isInsideArea(x));
-
-        let isClosed = activity.IsOpen == false;
-        let linecolor = isClosed ? colors.closed : colors.lift;
-        let linelayers = [];
-        let interactivelayers = [];
-
-        stations.forEach(station =>
-        {
-          let marker = L.marker([station.Latitude, station.Longitude], {
-            icon: icon,
-          }).bindPopup(L.popup().setContent(this.liftPopupContent(activity, lifttype, station.Gpstype)));
-
-          columns_layer_array.push(marker);
-          interactivelayers.push(marker);
-        });
-
-        let popupline = L.popup().setContent(this.liftPopupContent(activity, lifttype));
-
-        for (let i = 1; i < stations.length; i++)
-        {
-          let segment = [
-            [stations[i - 1].Latitude, stations[i - 1].Longitude],
-            [stations[i].Latitude, stations[i].Longitude]
-          ];
-
-          // White casing below the lift line keeps it readable on top of slopes and the base map
-          let casing = L.polyline(segment, {
-            pane: 'lifts',
-            color: colors.surface,
-            opacity: 0.9,
-            weight: 5,
-            lineCap: 'round',
-            interactive: false
-          }).addTo(this.map);
-
-          let polyline = L.polyline(segment, {
-            pane: 'lifts',
-            color: linecolor,
-            opacity: 1,
-            weight: 2.5,
-            lineCap: 'round',
-            dashArray: isClosed ? '4 6' : null
-          }).addTo(this.map).bindPopup(popupline);
-
-          polyline.on('mouseover', function () { this.setStyle({ weight: 4.5 }); });
-          polyline.on('mouseout', function () { this.setStyle({ weight: 2.5 }); });
-
-          linelayers.push(casing, polyline);
-          interactivelayers.push(polyline);
-        }
-
-        let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
-
-        if (track && interactivelayers.length > 0)
-        {
-          let style = { pane: 'lifts', color: linecolor, weight: 2.5, opacity: 1, lineCap: 'round', dashArray: isClosed ? '4 6' : null };
-
-          const loadTrack = () =>
-          {
-            interactivelayers.forEach(layer =>
-            {
-              layer.off('mouseover', loadTrack);
-              layer.off('click', loadTrack);
-            });
-
-            // The real track replaces the straight line
-            this.loadTrack(track, style, this.liftPopupContent(activity, lifttype), () => linelayers.forEach(layer => layer.remove()));
-          };
-
-          interactivelayers.forEach(layer =>
-          {
-            layer.on('mouseover', loadTrack);
-            layer.on('click', loadTrack);
-          });
-        }
+        console.log('could not draw ' + activity.Id, e);
       }
     });
+
     //Getting Skiareas
     await this.fetchSkiAreas(this.propLanguage, sources.skiareas);
 
     this.nodes.map(skiarea =>
     {
+      if (!Number.isFinite(skiarea.Latitude) || !Number.isFinite(skiarea.Longitude))
+        return;
 
       const posskiarea = [
         skiarea.Latitude,
