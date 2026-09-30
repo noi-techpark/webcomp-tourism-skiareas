@@ -42,14 +42,13 @@
     "options": [
       {
         "key": "types",
-        "type": "select",
-        "label": "Tag filter: slopes, lifts or both (slopes,lifts), default is slopes,lifts",
+        "type": "multiselect",
+        "label": "Show slopes and/or lifts",
         "required": false,
         "options": {
           "values": [
             "slopes",
-            "lifts",
-            "slopes,lifts"
+            "lifts"
           ],
           "default": "slopes,lifts"
         }
@@ -70,34 +69,16 @@
       },
       {
         "key": "source",
-        "type": "select",
-        "label": "Data provider for slopes and lifts (lts, dss, discoverswiss). Default is `lts,dss`",
+        "type": "multiselect",
+        "label": "Data provider for slopes, lifts and ski areas: lts, dss, discoverswiss. Default is `dss`",
         "required": false,
         "options": {
           "values": [
             "lts",
             "dss",
-            "discoverswiss",
-            "lts,dss",
-            "lts,dss,discoverswiss"
+            "discoverswiss"
           ],
-          "default": "lts,dss"
-        }
-      },
-      {
-        "key": "skiareasource",
-        "type": "select",
-        "label": "Data provider for ski areas (idm, dss, discoverswiss). Default is `idm,dss`",
-        "required": false,
-        "options": {
-          "values": [
-            "idm",
-            "dss",
-            "discoverswiss",
-            "idm,dss",
-            "idm,dss,discoverswiss"
-          ],
-          "default": "idm,dss"
+          "default": "dss"
         }
       },
       {
@@ -108,16 +89,7 @@
         "options": {
           "default": ""
         }
-      },
-      {
-        "key": "checkgpspoints",
-        "type": "bool",
-        "label": "Removes gps points outside 200 km of the center of south tyrol",
-        "required": false,
-        "options": {
-          "default": true
-        }
-      }      
+      }
     ]
   }
 }

@@ -60,20 +60,20 @@ Include the Javascript file `dist/map_widget.min.js` in your HTML and define the
 
 #### types
 
-Type: string
-Options: "slopes", "lifts" or "slopes,lifts" (passed as tagfilter to the ODHActivityPoi endpoint)
+Type: multiselect (comma separated)
+Options: "slopes", "lifts", default "slopes,lifts" (passed as tagfilter to the ODHActivityPoi endpoint)
 
 #### source
 
-Type: string
-Options: "lts", "dss", "discoverswiss" or a comma separated combination, default "lts,dss"
-Filters slopes and lifts by data provider
+Type: multiselect (comma separated)
+Options: "lts", "dss", "discoverswiss", default "dss"
+Data provider for slopes, lifts and ski areas:
 
-#### skiareasource
-
-Type: string
-Options: "idm", "dss", "discoverswiss" or a comma separated combination, default "idm,dss"
-Filters ski areas by data provider
+| source | slopes and lifts | ski areas |
+|---|---|---|
+| lts | lts | idm |
+| dss | dss | idm |
+| discoverswiss | discoverswiss | discoverswiss |
 
 #### language
 

@@ -17,6 +17,32 @@ import moment from 'moment';
 import L2 from 'leaflet-gpx';
 import L3 from 'leaflet-kml';
 
+/**
+ * Data providers selectable with the source attribute and the Open Data Hub
+ * sources they stand for: ODHActivityPoi (slopes, lifts) and SkiArea.
+ */
+const DATA_PROVIDERS = {
+  lts: { activities: 'lts', skiareas: 'idm' },
+  dss: { activities: 'dss', skiareas: 'idm' },
+  discoverswiss: { activities: 'discoverswiss', skiareas: 'discoverswiss' }
+};
+
+// Multiselect values arrive as comma separated string or as JSON array
+function parseList(value)
+{
+  if (Array.isArray(value))
+    return value;
+  if (!value)
+    return [];
+
+  let text = String(value).trim();
+  if (text.startsWith('['))
+  {
+    try { return JSON.parse(text); } catch (e) { }
+  }
+  return text.split(',').map(x => x.trim().replace(/^["']|["']$/g, '')).filter(x => x);
+}
+
 class MapWidget extends LitElement
 {
 
@@ -38,10 +64,6 @@ class MapWidget extends LitElement
       propSource: {
         type: String,
         attribute: 'source'
-      },
-      propSkiAreaSource: {
-        type: String,
-        attribute: 'skiareasource'
       },
       propCenterMap: {
         type: String,
@@ -79,6 +101,10 @@ class MapWidget extends LitElement
     this.fetchQueue = [];
     this.fetchActive = 0;
     this.fetchMaxParallel = 6;
+
+    /* Defaults, used when the types / source attributes are not set */
+    this.propTypes = 'slopes,lifts';
+    this.propSource = 'dss';
 
     /* Lift station and slope point markers are shown from this zoom level on, below it the lift lines alone are drawn */
     this.stationMinZoom = 13;
@@ -285,6 +311,22 @@ class MapWidget extends LitElement
     return getDistanceFromLatLonInKm(46.655781, 11.4296877, gps.Latitude, gps.Longitude) < 200;
   }
 
+  // Resolves the selected data providers to the sources of the ODHActivityPoi and SkiArea endpoints
+  dataSources()
+  {
+    let activities = new Set();
+    let skiareas = new Set();
+
+    parseList(this.propSource).forEach(provider =>
+    {
+      let mapping = DATA_PROVIDERS[provider] || { activities: provider, skiareas: provider };
+      activities.add(mapping.activities);
+      skiareas.add(mapping.skiareas);
+    });
+
+    return { activities: [...activities].join(','), skiareas: [...skiareas].join(',') };
+  }
+
   get language()
   {
     return this.propLanguage || 'en';
@@ -365,7 +407,9 @@ class MapWidget extends LitElement
 
     let columns_layer_array = [];
 
-    await this.fetchActivities(this.propTypes, this.propLanguage, this.propSource);
+    let sources = this.dataSources();
+
+    await this.fetchActivities(parseList(this.propTypes).join(','), this.propLanguage, sources.activities);
 
     this.nodes.map(activity =>
     {
@@ -524,7 +568,7 @@ class MapWidget extends LitElement
       }
     });
     //Getting Skiareas
-    await this.fetchSkiAreas(this.propLanguage, this.propSkiAreaSource);
+    await this.fetchSkiAreas(this.propLanguage, sources.skiareas);
 
     this.nodes.map(skiarea =>
     {
