@@ -69,7 +69,7 @@ export async function fetchSkiAreas(language, source) {
 	return callGet(config.API_BASE_URL_TOURISM,"/SkiArea", {
 		fields: "Id,Latitude,Longitude,SkiRegionName." + language + ",Detail." + language +".Title,Detail." + language + ".BaseText,ContactInfos" +  language + 
 				",Active,OperationSchedule[0].Start,OperationSchedule[0].Stop" +
-				",TotalSlopeKm,SlopeKmBlue,SlopeKmRed,SlopeKmBlack,LiftCount",
+				",TotalSlopeKm,SlopeKmBlue,SlopeKmRed,SlopeKmBlack,LiftCount,Geo",
 		active: true,
 		language: language,
 		source: source,

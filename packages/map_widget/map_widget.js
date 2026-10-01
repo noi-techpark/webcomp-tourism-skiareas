@@ -21,13 +21,20 @@ import L3 from 'leaflet-kml';
  * Data providers selectable with the source attribute and the Open Data Hub
  * sources they stand for: ODHActivityPoi (slopes, lifts) and SkiArea.
  */
+/**
+ * Defaults for types and source. They are applied in the code because the web component
+ * store ignores the default of a multiselect and may pass an empty value.
+ */
+const DEFAULT_TYPES = ['slopes', 'lifts'];
+const DEFAULT_SOURCES = ['dss'];
+
 const DATA_PROVIDERS = {
   lts: { activities: 'lts', skiareas: 'idm' },
   dss: { activities: 'dss', skiareas: 'idm' }, //comment out dss because the skiareas does not have a valid gps
   discoverswiss: { activities: 'discoverswiss', skiareas: 'discoverswiss' }
 };
 
-// Multiselect values arrive as comma separated string or as JSON array
+// Multiselect values arrive as comma separated string or as JSON array, an empty selection may come as "" or "null"
 function parseList(value)
 {
   if (Array.isArray(value))
@@ -40,7 +47,27 @@ function parseList(value)
   {
     try { return JSON.parse(text); } catch (e) { }
   }
-  return text.split(',').map(x => x.trim().replace(/^["']|["']$/g, '')).filter(x => x);
+  return text.split(',').map(x => x.trim().replace(/^["']|["']$/g, '')).filter(x => x && x != 'null' && x != 'undefined');
+}
+
+/**
+ * Parses the coordinate groups of a WKT geometry (LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON)
+ * into rings of [lat, lng] points. WKT uses "lng lat" order.
+ */
+function parseWktRings(wkt)
+{
+  if (typeof wkt !== 'string')
+    return [];
+
+  return (wkt.match(/\(([^()]+)\)/g) || [])
+    .map(group => group.slice(1, -1).split(',')
+      .map(point =>
+      {
+        const [lng, lat] = point.trim().split(/\s+/).map(Number);
+        return [lat, lng];
+      })
+      .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng)))
+    .filter(ring => ring.length > 2);
 }
 
 class MapWidget extends LitElement
@@ -102,10 +129,6 @@ class MapWidget extends LitElement
     this.fetchActive = 0;
     this.fetchMaxParallel = 6;
 
-    /* Defaults, used when the types / source attributes are not set */
-    this.propTypes = 'slopes,lifts';
-    this.propSource = 'dss';
-
     /* Lift station and slope point markers are shown from this zoom level on, below it the lift lines alone are drawn */
     this.stationMinZoom = 13;
 
@@ -142,9 +165,11 @@ class MapWidget extends LitElement
       attribution: this.map_attribution
     }).addTo(this.map);
 
-    // Draw lifts above slopes
+    // Draw lifts above slopes, ski area outlines below everything else
     this.map.createPane('lifts');
     this.map.getPane('lifts').style.zIndex = 450;
+    this.map.createPane('skiareas');
+    this.map.getPane('skiareas').style.zIndex = 350;
   }
 
   hasTag(activity, tagId)
@@ -326,7 +351,11 @@ class MapWidget extends LitElement
     let activities = new Set();
     let skiareas = new Set();
 
-    parseList(this.propSource).forEach(provider =>
+    let providers = parseList(this.propSource);
+    if (providers.length == 0)
+      providers = DEFAULT_SOURCES;
+
+    providers.forEach(provider =>
     {
       let mapping = DATA_PROVIDERS[provider] || { activities: provider, skiareas: provider };
       mapping.activities.split(',').forEach(x => activities.add(x));
@@ -575,7 +604,11 @@ class MapWidget extends LitElement
 
     let sources = this.dataSources();
 
-    await this.fetchActivities(parseList(this.propTypes).join(','), this.propLanguage, sources.activities);
+    let types = parseList(this.propTypes);
+    if (types.length == 0)
+      types = DEFAULT_TYPES;
+
+    await this.fetchActivities(types.join(','), this.propLanguage, sources.activities);
 
     // One broken record must not stop the rest of the map (and the ski areas) from being drawn
     this.nodes.forEach(activity =>
@@ -595,13 +628,30 @@ class MapWidget extends LitElement
 
     this.nodes.map(skiarea =>
     {
-      if (!Number.isFinite(skiarea.Latitude) || !Number.isFinite(skiarea.Longitude))
+      // Outline of the ski area (Geo.track, WKT), shown while the popup of the ski area is open
+      let rings = parseWktRings(skiarea.Geo && skiarea.Geo.track && skiarea.Geo.track.Geometry);
+      let outline = rings.length > 0
+        ? L.polygon(rings.map(ring => [ring]), {
+            pane: 'skiareas',
+            color: colors.skiarea,
+            weight: 2,
+            opacity: 0.9,
+            fillColor: colors.skiarea,
+            fillOpacity: 0.08,
+            lineJoin: 'round',
+            interactive: false
+          })
+        : null;
+
+      // DSS ski areas have Latitude/Longitude 0,0, their badge is placed in the centre of the outline
+      let hasPosition = Number.isFinite(skiarea.Latitude) && Number.isFinite(skiarea.Longitude) && !(skiarea.Latitude == 0 && skiarea.Longitude == 0);
+
+      if (!hasPosition && !outline)
         return;
 
-      const posskiarea = [
-        skiarea.Latitude,
-        skiarea.Longitude
-      ];
+      const posskiarea = hasPosition
+        ? [skiarea.Latitude, skiarea.Longitude]
+        : outline.getBounds().getCenter();
 
       // Round badge with a mountain glyph marking the ski area centre
       let iconskiarea = L.divIcon({
@@ -634,6 +684,12 @@ class MapWidget extends LitElement
         riseOnHover: true,
         zIndexOffset: 1000
       }).addTo(this.map).bindPopup(popupskiarea);
+
+      if (outline)
+      {
+        marker.on('popupopen', () => outline.addTo(this.map));
+        marker.on('popupclose', () => outline.remove());
+      }
 
     });
 
