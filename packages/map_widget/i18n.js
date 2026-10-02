@@ -23,7 +23,11 @@ const translations = {
   lift_carpet: { de: 'Förderband', it: 'Tapis roulant', en: 'Moving carpet' },
   lift_train: { de: 'Zug', it: 'Treno', en: 'Train' },
   lift_bus: { de: 'Skibus', it: 'Skibus', en: 'Ski bus' },
-  lift_unknown: { de: 'Aufstiegsanlage', it: 'Impianto di risalita', en: 'Lift' }
+  lift_unknown: { de: 'Aufstiegsanlage', it: 'Impianto di risalita', en: 'Lift' },
+
+  // Ski area popup
+  count_lifts: { de: '{n} Lifte', it: '{n} impianti', en: '{n} lifts' },
+  count_slopes: { de: '{n} Pisten', it: '{n} piste', en: '{n} slopes' }
 };
 
 // Translates a key into the given language (de, it, en), falls back to English, then to the key itself

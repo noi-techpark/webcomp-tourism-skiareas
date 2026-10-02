@@ -143,6 +143,16 @@ class MapWidget extends LitElement
     this.fetchActive = 0;
     this.fetchMaxParallel = 6;
 
+    /* Lifts and slopes (see addFeature), ski areas and the currently selected ski area */
+    this.features = [];
+    this.skiAreaEntries = [];
+    this.focusedSkiArea = null;
+
+    /* Ski area outlines: always shown, highlighted when the ski area is selected */
+    this.outlineStyle = { color: colors.skiarea, weight: 1.5, opacity: 0.6, fillColor: colors.skiarea, fillOpacity: 0.04 };
+    this.outlineStyleFocused = { color: colors.skiarea, weight: 3, opacity: 1, fillColor: colors.skiarea, fillOpacity: 0.12 };
+    this.outlineStyleFaded = { color: colors.skiarea, weight: 1, opacity: 0.25, fillColor: colors.skiarea, fillOpacity: 0 };
+
     /* Lift station and slope point markers are shown from this zoom level on, below it the lift lines alone are drawn */
     this.stationMinZoom = 13;
 
@@ -234,7 +244,7 @@ class MapWidget extends LitElement
 
   /**
    * Loads a track (KML or GPX) and draws it with the given style.
-   * onloaded is called once the track is on the map.
+   * onloaded(layer) is called once the track is on the map.
    */
   loadTrack(track, style, popupcontent, onloaded)
   {
@@ -259,7 +269,7 @@ class MapWidget extends LitElement
           layer.setStyle(style).addTo(this.map).bindPopup(popupcontent);
 
           if (onloaded)
-            onloaded();
+            onloaded(layer);
         })
         .catch(e => console.log('kml load failed: ' + url, e));
     }
@@ -267,7 +277,7 @@ class MapWidget extends LitElement
     {
       let url = track.GpxTrackUrl.replace('https://lcs.lts.it/downloads/gpx/', 'https://tourism.opendatahub.com/v1/Activity/Gpx/');
 
-      new L2.GPX(url, {
+      let layer = new L2.GPX(url, {
         async: true,
         gpx_options: { parseElements: 'track' },
         polyline_options: style,
@@ -275,7 +285,7 @@ class MapWidget extends LitElement
       }).on('loaded', () =>
       {
         if (onloaded)
-          onloaded();
+          onloaded(layer);
       }).addTo(this.map).bindPopup(popupcontent);
     }
   }
@@ -466,6 +476,68 @@ class MapWidget extends LitElement
     return { icon: icons[type], label: label };
   }
 
+  /**
+   * Every drawn lift and slope is registered as a feature: its points (stations / start point),
+   * its map layers and the ski areas it lies in. This is used to highlight the lifts and slopes
+   * of a selected ski area.
+   */
+  addFeature(kind, points)
+  {
+    let feature = { kind: kind, points: points, layers: [], skiareas: new Set() };
+    this.features.push(feature);
+    return feature;
+  }
+
+  addFeatureLayer(feature, layer, baseOpacity)
+  {
+    layer._baseOpacity = baseOpacity != null ? baseOpacity : (layer.options && layer.options.opacity != null ? layer.options.opacity : 1);
+    feature.layers.push(layer);
+    this.applyFocus(feature);
+  }
+
+  // Fades lifts and slopes outside of the selected ski area
+  applyFocus(feature)
+  {
+    let faded = this.focusedSkiArea != null && !feature.skiareas.has(this.focusedSkiArea.id);
+
+    feature.layers.forEach(layer =>
+    {
+      let opacity = faded ? layer._baseOpacity * 0.2 : layer._baseOpacity;
+
+      if (layer instanceof L.Marker)
+        layer.setOpacity(opacity);
+      else if (layer.setStyle)
+        layer.setStyle({ opacity: opacity });
+    });
+  }
+
+  focusSkiArea(entry)
+  {
+    this.focusedSkiArea = entry;
+
+    this.skiAreaEntries.forEach(other =>
+    {
+      if (other.outline)
+        other.outline.setStyle(entry == null ? this.outlineStyle : other == entry ? this.outlineStyleFocused : this.outlineStyleFaded);
+    });
+
+    this.features.forEach(feature => this.applyFocus(feature));
+  }
+
+  // Ray casting point in polygon test, ring and point as [lat, lng]
+  isInsideRing(point, ring)
+  {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++)
+    {
+      let [yi, xi] = ring[i];
+      let [yj, xj] = ring[j];
+      if (((yi > point[0]) != (yj > point[0])) && (point[1] < (xj - xi) * (point[0] - yi) / (yj - yi) + xi))
+        inside = !inside;
+    }
+    return inside;
+  }
+
   // Draws one slope or lift, station and slope markers are collected in columns_layer_array
   drawActivity(activity, columns_layer_array)
   {
@@ -500,6 +572,9 @@ class MapWidget extends LitElement
           icon: slopeicon
         }).bindPopup(L.popup().setContent(popupcontent));
 
+        let feature = this.addFeature('slope', [[start.Latitude, start.Longitude]]);
+        this.addFeatureLayer(feature, marker);
+
         let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
 
         if (track)
@@ -516,7 +591,7 @@ class MapWidget extends LitElement
               lineJoin: 'round'
             };
 
-            this.loadTrack(track, style, popupcontent);
+            this.loadTrack(track, style, popupcontent, layer => this.addFeatureLayer(feature, layer, style.opacity));
           };
 
           marker.on('mouseover', loadTrack);
@@ -551,6 +626,8 @@ class MapWidget extends LitElement
       let linelayers = [];
       let interactivelayers = [];
 
+      let feature = this.addFeature('lift', stations.map(station => [station.Latitude, station.Longitude]));
+
       stations.forEach(station =>
       {
         let marker = L.marker([station.Latitude, station.Longitude], {
@@ -559,6 +636,7 @@ class MapWidget extends LitElement
 
         columns_layer_array.push(marker);
         interactivelayers.push(marker);
+        this.addFeatureLayer(feature, marker);
       });
 
       let popupline = L.popup().setContent(this.liftPopupContent(activity, lifttype));
@@ -594,6 +672,8 @@ class MapWidget extends LitElement
 
         linelayers.push(casing, polyline);
         interactivelayers.push(polyline);
+        this.addFeatureLayer(feature, casing);
+        this.addFeatureLayer(feature, polyline);
       }
 
       let track = (activity.GpsTrack || []).find(x => x.Type == "detailed" && x.GpxTrackUrl);
@@ -611,7 +691,12 @@ class MapWidget extends LitElement
           });
 
           // The real track replaces the straight line
-          this.loadTrack(track, style, this.liftPopupContent(activity, lifttype), () => linelayers.forEach(layer => layer.remove()));
+          this.loadTrack(track, style, this.liftPopupContent(activity, lifttype), layer =>
+          {
+            linelayers.forEach(line => line.remove());
+            feature.layers = feature.layers.filter(l => !linelayers.includes(l));
+            this.addFeatureLayer(feature, layer, style.opacity);
+          });
         };
 
         interactivelayers.forEach(layer =>
@@ -652,24 +737,16 @@ class MapWidget extends LitElement
     //Getting Skiareas
     await this.fetchSkiAreas(this.propLanguage, sources.skiareas);
 
-    this.nodes.map(skiarea =>
+    // First pass: outlines and position of the ski areas
+    this.nodes.forEach(skiarea =>
     {
       if (!this.matchesSkiAreaRules(skiarea, sources.skiareaRules))
         return;
 
-      // Outline of the ski area (Geo.track, WKT), shown while the popup of the ski area is open
+      // Outline of the ski area (Geo.track, WKT), always shown
       let rings = parseWktRings(skiarea.Geo && skiarea.Geo.track && skiarea.Geo.track.Geometry);
       let outline = rings.length > 0
-        ? L.polygon(rings.map(ring => [ring]), {
-            pane: 'skiareas',
-            color: colors.skiarea,
-            weight: 2,
-            opacity: 0.9,
-            fillColor: colors.skiarea,
-            fillOpacity: 0.08,
-            lineJoin: 'round',
-            interactive: false
-          })
+        ? L.polygon(rings.map(ring => [ring]), Object.assign({ pane: 'skiareas', lineJoin: 'round' }, this.outlineStyle)).addTo(this.map)
         : null;
 
       // DSS ski areas have Latitude/Longitude 0,0, their badge is placed in the centre of the outline
@@ -678,9 +755,41 @@ class MapWidget extends LitElement
       if (!hasPosition && !outline)
         return;
 
-      const posskiarea = hasPosition
-        ? [skiarea.Latitude, skiarea.Longitude]
-        : outline.getBounds().getCenter();
+      this.skiAreaEntries.push({
+        id: skiarea.Id,
+        skiarea: skiarea,
+        rings: rings,
+        outline: outline,
+        position: hasPosition ? [skiarea.Latitude, skiarea.Longitude] : outline.getBounds().getCenter(),
+        counts: { lift: 0, slope: 0 }
+      });
+    });
+
+    // Assign every lift and slope to the ski areas whose outline contains one of its points
+    this.skiAreaEntries.forEach(entry =>
+    {
+      if (!entry.outline)
+        return;
+
+      let bounds = entry.outline.getBounds();
+
+      this.features.forEach(feature =>
+      {
+        let inside = feature.points.some(point =>
+          bounds.contains(point) && entry.rings.some(ring => this.isInsideRing(point, ring)));
+
+        if (inside)
+        {
+          feature.skiareas.add(entry.id);
+          entry.counts[feature.kind]++;
+        }
+      });
+    });
+
+    // Second pass: badges and popups, selecting a ski area highlights its outline, lifts and slopes
+    this.skiAreaEntries.forEach(entry =>
+    {
+      let skiarea = entry.skiarea;
 
       // Round badge with a mountain glyph marking the ski area centre
       let iconskiarea = L.divIcon({
@@ -699,6 +808,8 @@ class MapWidget extends LitElement
       let popupContSkiArea = '<div class="popup"><div class="popup__title">' + skiarea["Detail." + this.propLanguage + ".Title"] + '</div>';
       if (skiarea["SkiRegionName." + this.propLanguage])
         popupContSkiArea += '<div class="popup__meta">' + skiarea["SkiRegionName." + this.propLanguage] + '</div>';
+      if (entry.outline && (entry.counts.lift > 0 || entry.counts.slope > 0))
+        popupContSkiArea += '<div class="popup__meta">' + t('count_lifts', this.language, { n: entry.counts.lift }) + ' · ' + t('count_slopes', this.language, { n: entry.counts.slope }) + '</div>';
       if (skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
       {
         //Opening
@@ -708,22 +819,28 @@ class MapWidget extends LitElement
       }
       popupContSkiArea += '</div>';
 
-      let popupskiarea = L.popup().setContent(popupContSkiArea);
-
-      let marker = L.marker(posskiarea, {
+      // Ski areas with outline: the map zooms to the outline instead of panning to the popup
+      let marker = L.marker(entry.position, {
         icon: iconskiarea,
         riseOnHover: true,
         zIndexOffset: 1000
-      }).addTo(this.map).bindPopup(popupskiarea);
+      }).addTo(this.map).bindPopup(L.popup({ maxHeight: 240, autoPan: !entry.outline }).setContent(popupContSkiArea));
 
-      if (outline)
+      if (entry.outline)
       {
-        marker.on('popupopen', () => outline.addTo(this.map));
-        marker.on('popupclose', () => outline.remove());
+        marker.on('popupopen', () =>
+        {
+          this.focusSkiArea(entry);
+          this.map.fitBounds(entry.outline.getBounds(), { paddingTopLeft: [40, 300], paddingBottomRight: [40, 30], maxZoom: 14 });
+        });
+        marker.on('popupclose', () => { if (this.focusedSkiArea == entry) this.focusSkiArea(null); });
+
+        // A click inside the outline selects the ski area as well
+        entry.outline.on('click', () => marker.openPopup());
+        entry.outline.on('mouseover', () => { if (this.focusedSkiArea == null) entry.outline.setStyle({ weight: 2.5, fillOpacity: 0.08 }); });
+        entry.outline.on('mouseout', () => { if (this.focusedSkiArea == null) entry.outline.setStyle(this.outlineStyle); });
       }
-
     });
-
 
     this.visibleNodes = columns_layer_array.length;
 

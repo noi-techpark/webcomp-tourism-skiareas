@@ -116,11 +116,21 @@ centre (`Latitude`/`Longitude` of the `SkiArea` record). The popup shows the ski
 region, the season dates and the description.
 
 If the ski area has an outline (`Geo.track`, a WKT `LINESTRING` /
-`MULTILINESTRING`), it is drawn as a lightly filled teal area while the popup of
-the ski area is open, and removed again when the popup is closed. Ski areas
-without `Latitude`/`Longitude` (or with `0,0`, as DSS ski areas) are placed in
-the centre of their outline. Ski areas with neither position nor outline are not
-shown.
+`MULTILINESTRING`), it is always drawn as a thin, lightly filled teal area. Ski
+areas without `Latitude`/`Longitude` (or with `0,0`, as DSS ski areas) are placed
+in the centre of their outline. Ski areas with neither position nor outline are
+not shown.
+
+Every lift and slope is assigned to the ski areas whose outline contains one of
+its points (lift stations, slope start point). Clicking a ski area badge or inside
+its outline selects the ski area:
+
+- the map zooms to the outline and the outline is highlighted
+- lifts and slopes of the ski area keep their colours, everything outside is
+  faded, other outlines are faded too
+- the popup shows the number of lifts and slopes of the ski area
+
+Closing the popup ends the selection.
 
 ### Lifts
 
