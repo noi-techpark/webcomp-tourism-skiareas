@@ -13,7 +13,6 @@ import { fetchActivities, fetchSkiAreas } from './api/api.js';
 import colors, { slopeColor, cssVariables } from './colors.js';
 import { t } from './i18n.js';
 import config from './api/config.js';
-import moment from 'moment';
 import L2 from 'leaflet-gpx';
 import L3 from 'leaflet-kml';
 
@@ -399,6 +398,16 @@ class MapWidget extends LitElement
       skiareas: [...new Set(skiareaRules.map(rule => rule.source))].join(','),
       skiareaRules: skiareaRules
     };
+  }
+
+  // Formats a date in the widget language, e.g. 12.04.2026 (de), 12/04/2026 (it), 4/12/2026 (en)
+  formatDate(value)
+  {
+    let date = new Date(value);
+    if (!value || isNaN(date))
+      return '';
+
+    return date.toLocaleDateString(this.language, { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   get language()
@@ -813,7 +822,7 @@ class MapWidget extends LitElement
       if (skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
       {
         //Opening
-        popupContSkiArea += '<div class="popup__meta">' + moment(skiarea["OperationSchedule[0].Start"]).format('MM/DD/YYYY') + " - " + moment(skiarea["OperationSchedule[0].Stop"]).format('MM/DD/YYYY') + '</div>';
+        popupContSkiArea += '<div class="popup__meta">' + this.formatDate(skiarea["OperationSchedule[0].Start"]) + " - " + this.formatDate(skiarea["OperationSchedule[0].Stop"]) + '</div>';
         //BaseText
         popupContSkiArea += '<div>' + skiarea["Detail." + this.propLanguage + ".BaseText"] + '</div>';
       }
