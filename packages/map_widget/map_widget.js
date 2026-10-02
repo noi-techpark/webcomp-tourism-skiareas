@@ -18,20 +18,34 @@ import L2 from 'leaflet-gpx';
 import L3 from 'leaflet-kml';
 
 /**
- * Data providers selectable with the source attribute and the Open Data Hub
- * sources they stand for: ODHActivityPoi (slopes, lifts) and SkiArea.
- */
-/**
  * Defaults for types and source. They are applied in the code because the web component
  * store ignores the default of a multiselect and may pass an empty value.
  */
 const DEFAULT_TYPES = ['slopes', 'lifts'];
 const DEFAULT_SOURCES = ['dss'];
 
+// SkiRegion "Dolomiti Superski"
+const SKIREGION_DOLOMITI_SUPERSKI = '8260DC5B815D40B98A1B53E84EC2B419';
+
+/**
+ * Data providers selectable with the source attribute and the Open Data Hub data they stand for:
+ *  - activities: source of the slopes and lifts (ODHActivityPoi)
+ *  - skiareas: which ski areas (SkiArea) are shown, a ski area is shown if it matches one of the rules,
+ *    a rule matches on Source and optionally on SkiRegionId
+ */
 const DATA_PROVIDERS = {
-  lts: { activities: 'lts', skiareas: 'idm' },
-  dss: { activities: 'dss', skiareas: 'idm' }, //comment out dss because the skiareas does not have a valid gps
-  discoverswiss: { activities: 'discoverswiss', skiareas: 'discoverswiss' }
+  lts: {
+    activities: 'lts',
+    skiareas: [{ source: 'idm' }]
+  },
+  dss: {
+    activities: 'dss',
+    skiareas: [{ source: 'dss' }, { source: 'idm', skiRegionId: SKIREGION_DOLOMITI_SUPERSKI }]
+  },
+  discoverswiss: {
+    activities: 'discoverswiss',
+    skiareas: [{ source: 'discoverswiss' }]
+  }
 };
 
 // Multiselect values arrive as comma separated string or as JSON array, an empty selection may come as "" or "null"
@@ -345,11 +359,19 @@ class MapWidget extends LitElement
     return getDistanceFromLatLonInKm(46.655781, 11.4296877, gps.Latitude, gps.Longitude) < 200;
   }
 
+  // A ski area is shown if it matches one of the ski area rules of the selected data providers
+  matchesSkiAreaRules(skiarea, rules)
+  {
+    return rules.some(rule =>
+      rule.source == skiarea.Source &&
+      (!rule.skiRegionId || rule.skiRegionId == skiarea.SkiRegionId));
+  }
+
   // Resolves the selected data providers to the sources of the ODHActivityPoi and SkiArea endpoints
   dataSources()
   {
     let activities = new Set();
-    let skiareas = new Set();
+    let skiareaRules = [];
 
     let providers = parseList(this.propSource);
     if (providers.length == 0)
@@ -357,12 +379,16 @@ class MapWidget extends LitElement
 
     providers.forEach(provider =>
     {
-      let mapping = DATA_PROVIDERS[provider] || { activities: provider, skiareas: provider };
-      mapping.activities.split(',').forEach(x => activities.add(x));
-      mapping.skiareas.split(',').forEach(x => skiareas.add(x));
+      let mapping = DATA_PROVIDERS[provider] || { activities: provider, skiareas: [{ source: provider }] };
+      activities.add(mapping.activities);
+      skiareaRules.push(...mapping.skiareas);
     });
 
-    return { activities: [...activities].join(','), skiareas: [...skiareas].join(',') };
+    return {
+      activities: [...activities].join(','),
+      skiareas: [...new Set(skiareaRules.map(rule => rule.source))].join(','),
+      skiareaRules: skiareaRules
+    };
   }
 
   get language()
@@ -628,6 +654,9 @@ class MapWidget extends LitElement
 
     this.nodes.map(skiarea =>
     {
+      if (!this.matchesSkiAreaRules(skiarea, sources.skiareaRules))
+        return;
+
       // Outline of the ski area (Geo.track, WKT), shown while the popup of the ski area is open
       let rings = parseWktRings(skiarea.Geo && skiarea.Geo.track && skiarea.Geo.track.Geometry);
       let outline = rings.length > 0
@@ -667,7 +696,9 @@ class MapWidget extends LitElement
         popupAnchor: L.point(0, -18)
       });
 
-      let popupContSkiArea = '<div class="popup"><div class="popup__title">' + skiarea["Detail." + this.propLanguage + ".Title"] + '</div><div class="popup__meta">' + skiarea["SkiRegionName." + this.propLanguage] + '</div>';
+      let popupContSkiArea = '<div class="popup"><div class="popup__title">' + skiarea["Detail." + this.propLanguage + ".Title"] + '</div>';
+      if (skiarea["SkiRegionName." + this.propLanguage])
+        popupContSkiArea += '<div class="popup__meta">' + skiarea["SkiRegionName." + this.propLanguage] + '</div>';
       if (skiarea["Detail." + this.propLanguage + ".BaseText"] != null)
       {
         //Opening

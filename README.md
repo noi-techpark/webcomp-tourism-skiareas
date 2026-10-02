@@ -82,8 +82,8 @@ Data provider for slopes, lifts and ski areas:
 
 | source | slopes and lifts | ski areas |
 |---|---|---|
-| lts | lts | idm |
-| dss | dss | idm, dss |
+| lts | lts | all idm ski areas |
+| dss | dss | dss ski areas and the idm ski areas of the ski region Dolomiti Superski |
 | discoverswiss | discoverswiss | discoverswiss |
 
 The mapping is defined in `DATA_PROVIDERS` in `packages/map_widget/map_widget.js`.
